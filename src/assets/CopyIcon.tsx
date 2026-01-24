@@ -9,7 +9,7 @@ const CopyIcon = () => {
     >
       <g
         fill="none"
-        stroke="#ffffff"
+        stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth="2"

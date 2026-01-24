@@ -1,10 +1,10 @@
 export const palette = {
   primary: {
-    main: "#424242",
+    main: "#ffffff",
     400: "#bdbdbd",
     500: "#9e9e9e",
     600: "#757575",
     700: "#616161",
-    contrastText: "#ffffff",
+    contrastText: "#000000",
   },
 };

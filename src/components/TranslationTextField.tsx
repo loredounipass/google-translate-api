@@ -6,7 +6,6 @@ import { useSpeechSynthesis } from "react-speech-kit";
 import { useSearchParams } from "react-router-dom";
 import MicIcon from "assets/MicIcon";
 import PauseIcon from "assets/PauseIcon";
-import PlayIcon from "assets/PlayIcon";
 import SpeakerIcon from "assets/SpeakerIcon";
 import { DEFAULT_SOURCE_LANGUAGE } from "utils/constants";
 
@@ -21,22 +20,29 @@ const GlobalStyle = createGlobalStyle`
 const Container = styled.div<{ $hasText: boolean }>`
   position: relative;
   height: auto;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 400;
+  line-height: 1.4;
 
   textarea {
     width: 100%;
     height: 87%;
-    background-color: inherit;
+    background-color: #ffffff;
     border: none;
     outline: none;
     box-shadow: none;
-    color: #ffffff;
+    color: #111111;
+    font-family: inherit;
+    font-weight: 400;
+    letter-spacing: 0.2px;
     padding: 16px 40px 24px 16px;
     font-size: 18px;
     resize: none;
     transition: all 0.1s ease;
 
     &:focus {
-      outline: 2px solid ${(props) => props.theme.primary.main};
+      outline: none;
+      box-shadow: none;
     }
 
     &::-webkit-scrollbar {
@@ -44,9 +50,8 @@ const Container = styled.div<{ $hasText: boolean }>`
     }
 
     &::-webkit-scrollbar-thumb {
-      border: 2px solid ${(props) => props.theme.primary.main};
       border-radius: 20px;
-      background-color: ${(props) => props.theme.primary[700]};
+      background-color: #e0e0e0;
     }
   }
 
@@ -60,6 +65,7 @@ const Container = styled.div<{ $hasText: boolean }>`
     cursor: pointer;
     padding: 0;
     transition: opacity 0.2s ease;
+    color: #333333;
 
     &:hover {
       opacity: 0.8;
@@ -82,6 +88,7 @@ const Actions = styled.div`
     padding: 5px;
     transition: all 0.2s ease;
     position: relative;
+    color: #111111;
     
     &:disabled {
       cursor: not-allowed;
@@ -110,7 +117,7 @@ const Actions = styled.div`
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.14);
+    border: 2px solid rgba(0,0,0,0.06);
     animation: pulse 1s infinite;
   }
 `;
@@ -224,6 +231,9 @@ const TranslationTextField = () => {
   React.useEffect(() => {
     const initDevices = async () => {
       try {
+        // If a device was already selected, skip re-requesting permissions
+        if (selectedDeviceId) return;
+
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         stream.getTracks().forEach(t => t.stop());
         const list = await navigator.mediaDevices.enumerateDevices();
@@ -236,7 +246,7 @@ const TranslationTextField = () => {
     };
 
     initDevices();
-  }, []);
+  }, [selectedDeviceId]);
 
   const setTextParam = React.useCallback((value: string) => {
     const trimmedValue = value.trim() === "" ? "" : value;
@@ -353,7 +363,7 @@ const TranslationTextField = () => {
     }
   };
 
-  const cleanupAudioProcessing = async () => {
+  const cleanupAudioProcessing = React.useCallback(async () => {
     try {
       // Si el usuario quiere mantener el micrófono encendido, no cerramos los recursos
       const shouldClose = !keepMicOnRef.current;
@@ -393,10 +403,10 @@ const TranslationTextField = () => {
     } catch (err) {
       console.warn('Error during cleanupAudioProcessing', err);
     }
-  };
+  }, []);
 
   // Asegura que la captura de audio esté activa (sin iniciar el reconocimiento)
-  const ensureAudioStreamActive = async () => {
+  const ensureAudioStreamActive = React.useCallback(async () => {
     try {
       if (!mediaStreamRef.current) {
         await setupAudioProcessing(selectedDeviceId);
@@ -404,9 +414,9 @@ const TranslationTextField = () => {
     } catch (e) {
       console.warn('No se pudo activar captura de audio:', e);
     }
-  };
+  }, [selectedDeviceId]);
 
-  const startVAD = () => {
+  const startVAD = React.useCallback(() => {
     if (!analyserRef.current) return;
     const analyser = analyserRef.current;
 
@@ -559,7 +569,7 @@ const TranslationTextField = () => {
           }
       }
     }, vadCheckInterval);
-  };
+  }, [listening]);
 
   const handleSpeak = () => {
     if (speaking) {
@@ -652,7 +662,7 @@ const TranslationTextField = () => {
       }
       cleanupAudioProcessing();
     }
-  }, [keepMicOn]);
+  }, [keepMicOn, browserSupportsSpeechRecognition, isMicrophoneAvailable, ensureAudioStreamActive, listening]);
 
   return (
     <Container $hasText={!!text}>
@@ -675,6 +685,7 @@ const TranslationTextField = () => {
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
         <label style={{ color: '#bbb', fontSize: 12 }}>Entrada:</label>
+        
         <select
           value={selectedDeviceId || ''}
           onChange={(e) => setSelectedDeviceId(e.target.value || null)}
@@ -693,29 +704,52 @@ const TranslationTextField = () => {
             const inputs = list.filter(d => d.kind === 'audioinput');
             setDevices(inputs);
           } catch (err) { console.warn(err); }
-        }} style={{ background: 'none', border: 'none', color: '#bbb', cursor: 'pointer' }} aria-label="Refrescar dispositivos">↻</button>
+        }} style={{ background: 'none', border: 'none', color: '#333', cursor: 'pointer' }} aria-label="Refrescar dispositivos">↻</button>
       </div>
       <Actions>
         {browserSupportsSpeechRecognition ? (
           <>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input
-                id="keepMic"
-                type="checkbox"
-                checked={keepMicOn}
-                onChange={(e) => setKeepMicOn(e.target.checked)}
-                aria-label="Mantener micrófono encendido"
-              />
-              <span style={{ color: '#bbb', fontSize: 12 }}>Mantener micrófono</span>
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={keepMicOn}
+                aria-label="Alternar mantener micrófono"
+                onClick={() => setKeepMicOn(prev => !prev)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setKeepMicOn(prev => !prev); } }}
+                style={{
+                  width: 44,
+                  height: 24,
+                  borderRadius: 12,
+                  background: keepMicOn ? '#4caf50' : '#000000',
+                  border: 'none',
+                  position: 'relative',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                <span style={{
+                  position: 'absolute',
+                  top: 2,
+                  left: keepMicOn ? 22 : 2,
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  background: '#fff',
+                  transition: 'left 0.15s',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
+                }} />
+              </button>
+              <span style={{ color: '#333', fontSize: 12 }}>Mantener micrófono</span>
+            </div>
             <button 
-              onMouseDown={() => { if (!mediaStreamRef.current) ensureAudioStreamActive(); }}
-              onTouchStart={() => { if (!mediaStreamRef.current) ensureAudioStreamActive(); }}
-              onClick={handleSpeech}
-              disabled={isProcessing || (!isMicrophoneAvailable && !keepMicOn)}
+              onMouseDown={() => { if (!mediaStreamRef.current && keepMicOn) ensureAudioStreamActive(); }}
+              onTouchStart={() => { if (!mediaStreamRef.current && keepMicOn) ensureAudioStreamActive(); }}
+              onClick={() => { if (keepMicOn || listening) handleSpeech(); }}
+              disabled={isProcessing || (!isMicrophoneAvailable && !keepMicOn) || (!keepMicOn && !listening)}
               aria-label={listening ? "Detener reconocimiento" : "Iniciar reconocimiento"}
             >
-              {listening ? <PauseIcon /> : (keepMicOn ? <MicIcon /> : <PlayIcon />)}
+              {listening ? <PauseIcon /> : <MicIcon />}
             </button>
           </>
         ) : (

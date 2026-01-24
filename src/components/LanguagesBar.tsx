@@ -8,13 +8,7 @@ import {
   DEFAULT_TARGET_LANGUAGE 
 } from "utils/constants";
 import { SwitchIcon } from "../assets/SwitchIcon";
-import { palette } from "theme/palette";
-
-interface LanguageOption {
-  value: string;
-  label: string;
-  disabled?: boolean;
-}
+// removed unused `palette` import and `LanguageOption` type
 
 const LanguagesBar = () => {
   const [searchParams, setURLSearchParams] = useSearchParams();
@@ -32,12 +26,12 @@ const LanguagesBar = () => {
       disabled: false
     })), []);
 
-  const setLangParam = (key: string, value: string) => {
+  const setLangParam = React.useCallback((key: string, value: string) => {
     setURLSearchParams(params => {
       params.set(key, value);
       return params;
     });
-  };
+  }, [setURLSearchParams]);
 
   const switchLangsHandler = () => {
     const newSource = targetLang;
@@ -59,21 +53,24 @@ const LanguagesBar = () => {
     else updateLang(value, setTargetLang, "tl");
   };
 
-  const updateLang = React.useCallback((
-    value: string,
-    setter: React.Dispatch<React.SetStateAction<string>>,
-    paramKey: "sl" | "tl"
-  ) => {
-    if(AVAILABLE_LANGUAGES.some(lang => lang.code === value)) {
-      setter(value);
-      setLangParam(paramKey, value);
-    }
-  }, []);
+  const updateLang = React.useCallback(
+    (
+      value: string,
+      setter: React.Dispatch<React.SetStateAction<string>>,
+      paramKey: "sl" | "tl"
+    ) => {
+      if (AVAILABLE_LANGUAGES.some((lang) => lang.code === value)) {
+        setter(value);
+        setLangParam(paramKey, value);
+      }
+    },
+    [setLangParam]
+  );
 
   React.useEffect(() => {
-    if(!searchParams.get("sl")) setLangParam("sl", DEFAULT_SOURCE_LANGUAGE);
-    if(!searchParams.get("tl")) setLangParam("tl", DEFAULT_TARGET_LANGUAGE);
-  }, []);
+    if (!searchParams.get("sl")) setLangParam("sl", DEFAULT_SOURCE_LANGUAGE);
+    if (!searchParams.get("tl")) setLangParam("tl", DEFAULT_TARGET_LANGUAGE);
+  }, [searchParams, setLangParam]);
 
   return (
     <Container>

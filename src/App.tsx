@@ -30,10 +30,10 @@ function App() {
 
 const Container = styled.div`
   text-align: center;
-  color: #ffffff;
+  color: #111111;
   height: 80vh; /* Aumentado de 70vh a 80vh */
   width: 97vw;  /* Aumentado de 80vw a 90vw */
-  background-color: ${(props) => props.theme.primary.main};
+  background-color: #ffffff;
   border-radius: 16px;
   margin: 0 auto;
   margin-top: 10vh;
