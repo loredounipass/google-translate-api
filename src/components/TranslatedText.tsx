@@ -8,7 +8,7 @@ import { DEFAULT_SOURCE_LANGUAGE, DEFAULT_TARGET_LANGUAGE } from "utils/constant
 import { debounce } from "lodash";
 
 const TranslatedText = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setURLSearchParams] = useSearchParams();
   // Se elimina la desestructuración de cancel, speaking y supported, ya que no se usan.
   useSpeechSynthesis();
   const text = searchParams.get("text") || "";
@@ -18,6 +18,8 @@ const TranslatedText = () => {
   const [translatedText, setTranslatedText] = React.useState<string[]>([]);
   const abortControllerRef = React.useRef<AbortController>();
   const currentTextRef = React.useRef(text);
+  const prevSlRef = React.useRef<string | null>(null);
+  const prevTlRef = React.useRef<string | null>(null);
 
   const translateHandler = async (value: string, targetLang: string, sourceLang: string) => {
     if (!value || value !== currentTextRef.current) {
@@ -75,6 +77,30 @@ const TranslatedText = () => {
   // Usamos un único useEffect para evitar llamadas duplicadas y
   // asegurarnos de cancelar traducciones pendientes al borrar el texto.
   React.useEffect(() => {
+    // Detect language swap (sl/tl swapped) and, if we have a translated
+    // value, replace the `text` param with the translated content so
+    // the UI effectively reverses the translation.
+    if (
+      prevSlRef.current !== null &&
+      prevTlRef.current !== null &&
+      sl === prevTlRef.current &&
+      tl === prevSlRef.current &&
+      translatedText.length > 0
+    ) {
+      const newText = translatedText.join("\n");
+      if (text !== newText) {
+        setURLSearchParams((params) => {
+          params.set("text", newText);
+          return params;
+        });
+        // Do not continue with current effect — the URL change will
+        // trigger this effect again with the updated `text`.
+        prevSlRef.current = sl;
+        prevTlRef.current = tl;
+        return;
+      }
+    }
+
     currentTextRef.current = text;
 
     if (!text) {
@@ -95,6 +121,12 @@ const TranslatedText = () => {
       }
     };
   }, [text, tl, sl, debouncedTranslateHandler]);
+
+  // Keep previous language refs in sync for swap detection
+  React.useEffect(() => {
+    prevSlRef.current = sl;
+    prevTlRef.current = tl;
+  }, [sl, tl]);
 
   return (
     <Container $rtl={isRTL}>

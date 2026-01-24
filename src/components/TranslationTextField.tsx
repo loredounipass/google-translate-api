@@ -261,6 +261,17 @@ const TranslationTextField = () => {
     });
   }, [setURLSearchParams]);
 
+  // Sync local `text` state when the URL `text` param changes externally
+  // (for example, when the user swaps languages and another component
+  // writes the translated text into the `text` param).
+  React.useEffect(() => {
+    const textParam = searchParams.get("text") || "";
+    if (manualEditRef.current) return; // don't override user's manual edits
+    if (textParam !== text) {
+      setText(textParam);
+    }
+  }, [searchParams.get("text")]);
+
   const clearTextHandler = async () => {
     setTextParam("");
     resetTranscript();
