@@ -714,7 +714,7 @@ const TranslationTextField = () => {
                 type="button"
                 role="switch"
                 aria-checked={keepMicOn}
-                aria-label="Alternar mantener micrófono"
+                aria-label="Toggle keep microphone on"
                 onClick={() => setKeepMicOn(prev => !prev)}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setKeepMicOn(prev => !prev); } }}
                 style={{
@@ -740,7 +740,7 @@ const TranslationTextField = () => {
                   boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                 }} />
               </button>
-              <span style={{ color: '#333', fontSize: 12 }}>Mantener micrófono</span>
+              <span style={{ color: '#333', fontSize: 12 }}>Keep microphone on</span>
             </div>
             <button 
               onMouseDown={() => { if (!mediaStreamRef.current && keepMicOn) ensureAudioStreamActive(); }}
