@@ -58,6 +58,11 @@ const TranslatedText = () => {
     try {
       const txt = translatedText.join("\n");
       navigator.clipboard.writeText(txt);
+      setCopied(true);
+      if (copyTimeoutRef.current) {
+        window.clearTimeout(copyTimeoutRef.current);
+      }
+      copyTimeoutRef.current = window.setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error("Error al copiar:", error);
       alert("No se pudo copiar el texto");
@@ -128,6 +133,18 @@ const TranslatedText = () => {
     prevTlRef.current = tl;
   }, [sl, tl]);
 
+  // Toast state and timeout ref for copy feedback
+  const [copied, setCopied] = React.useState(false);
+  const copyTimeoutRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        window.clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <Container $rtl={isRTL}>
       <div>
@@ -146,6 +163,7 @@ const TranslatedText = () => {
           </button>
         </Actions>
       )}
+      {copied && <Toast>Text copied</Toast>}
     </Container>
   );
 };
@@ -201,6 +219,19 @@ const Actions = styled.div`
     bottom: 10px;
     right: 10px;
   }
+`;
+
+const Toast = styled.div`
+  position: absolute;
+  bottom: 50px;
+  right: 10px;
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  z-index: 20;
 `;
 
 export default TranslatedText;
