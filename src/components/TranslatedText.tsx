@@ -170,8 +170,8 @@ const TranslatedText = () => {
 
 const Container = styled.div<{ $rtl: boolean }>`
   position: relative;
-  background-color: #fafafa;
-  color: #111111;
+  background-color: #f3f4f6;
+  color: #0f1720;
   font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   font-weight: 400;
   line-height: 1.4;
@@ -190,10 +190,11 @@ const Container = styled.div<{ $rtl: boolean }>`
     }
 
     &::-webkit-scrollbar-thumb {
-      background: #cfcfcf;
+      background: #bdbdbd;
       border-radius: 4px;
     }
   }
+  border: 1px solid #e6e9ee;
 `;
 
 const Actions = styled.div`
