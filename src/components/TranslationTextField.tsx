@@ -125,6 +125,7 @@ const Actions = styled.div`
 const TranslationTextField = () => {
   const [searchParams, setURLSearchParams] = useSearchParams();
   const [text, setText] = React.useState(searchParams.get("text") || "");
+  const urlTextParam = searchParams.get("text") || "";
   const [voice, setVoice] = React.useState<SpeechSynthesisVoice | null>(null);
   const { speak, cancel, speaking, supported } = useSpeechSynthesis();
   const sl = searchParams.get("sl") || DEFAULT_SOURCE_LANGUAGE;
@@ -265,12 +266,11 @@ const TranslationTextField = () => {
   // (for example, when the user swaps languages and another component
   // writes the translated text into the `text` param).
   React.useEffect(() => {
-    const textParam = searchParams.get("text") || "";
     if (manualEditRef.current) return; // don't override user's manual edits
-    if (textParam !== text) {
-      setText(textParam);
+    if (urlTextParam !== text) {
+      setText(urlTextParam);
     }
-  }, [searchParams.get("text")]);
+  }, [urlTextParam, text]);
 
   const clearTextHandler = async () => {
     setTextParam("");
@@ -332,48 +332,6 @@ const TranslationTextField = () => {
     }
   };
 
-  // Inicializa WebAudio con constraints para mejorar la captura
-  const setupAudioProcessing = async (deviceId: string | null) => {
-    try {
-      // Si ya existe un stream, limpiarlo
-      await cleanupAudioProcessing();
-
-      const constraints: MediaStreamConstraints = {
-        audio: {
-          deviceId: deviceId ? { exact: deviceId } : undefined,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      mediaStreamRef.current = stream;
-
-      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
-      const audioCtx = new AudioContextClass();
-      audioContextRef.current = audioCtx;
-
-      const source = audioCtx.createMediaStreamSource(stream);
-      const compressor = audioCtx.createDynamicsCompressor();
-      const gain = audioCtx.createGain();
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 2048;
-
-      // Conectar: source -> compressor -> gain -> analyser (no conectar a destino)
-      source.connect(compressor);
-      compressor.connect(gain);
-      gain.connect(analyser);
-
-      analyserRef.current = analyser;
-
-      // Iniciar VAD simple
-      startVAD();
-    } catch (err) {
-      console.error('No se pudo inicializar audio:', err);
-    }
-  };
-
   const cleanupAudioProcessing = React.useCallback(async () => {
     try {
       // Si el usuario quiere mantener el micrófono encendido, no cerramos los recursos
@@ -416,6 +374,48 @@ const TranslationTextField = () => {
     }
   }, []);
 
+  // Inicializa WebAudio con constraints para mejorar la captura
+  const setupAudioProcessing = React.useCallback(async (deviceId: string | null) => {
+    try {
+      // Si ya existe un stream, limpiarlo
+      await cleanupAudioProcessing();
+
+      const constraints: MediaStreamConstraints = {
+        audio: {
+          deviceId: deviceId ? { exact: deviceId } : undefined,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      mediaStreamRef.current = stream;
+
+      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+      const audioCtx = new AudioContextClass();
+      audioContextRef.current = audioCtx;
+
+      const source = audioCtx.createMediaStreamSource(stream);
+      const compressor = audioCtx.createDynamicsCompressor();
+      const gain = audioCtx.createGain();
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+
+      // Conectar: source -> compressor -> gain -> analyser (no conectar a destino)
+      source.connect(compressor);
+      compressor.connect(gain);
+      gain.connect(analyser);
+
+      analyserRef.current = analyser;
+
+      // Iniciar VAD simple
+      startVAD();
+    } catch (err) {
+      console.error('No se pudo inicializar audio:', err);
+    }
+  }, [cleanupAudioProcessing]);
+
   // Asegura que la captura de audio esté activa (sin iniciar el reconocimiento)
   const ensureAudioStreamActive = React.useCallback(async () => {
     try {
@@ -425,7 +425,7 @@ const TranslationTextField = () => {
     } catch (e) {
       console.warn('No se pudo activar captura de audio:', e);
     }
-  }, [selectedDeviceId]);
+  }, [selectedDeviceId, setupAudioProcessing]);
 
   const startVAD = React.useCallback(() => {
     if (!analyserRef.current) return;
@@ -673,7 +673,7 @@ const TranslationTextField = () => {
       }
       cleanupAudioProcessing();
     }
-  }, [keepMicOn, browserSupportsSpeechRecognition, isMicrophoneAvailable, ensureAudioStreamActive, listening]);
+  }, [keepMicOn, browserSupportsSpeechRecognition, isMicrophoneAvailable, ensureAudioStreamActive, listening, cleanupAudioProcessing]);
 
   return (
     <Container $hasText={!!text}>

@@ -21,7 +21,7 @@ const TranslatedText = () => {
   const prevSlRef = React.useRef<string | null>(null);
   const prevTlRef = React.useRef<string | null>(null);
 
-  const translateHandler = async (value: string, targetLang: string, sourceLang: string) => {
+  const translateHandler = React.useCallback(async (value: string, targetLang: string, sourceLang: string) => {
     if (!value || value !== currentTextRef.current) {
       setTranslatedText([]);
       return;
@@ -52,7 +52,7 @@ const TranslatedText = () => {
         setTranslatedText(["<< Error en la traducción >>"]);
       }
     }
-  };
+  }, [setTranslatedText]);
 
   const copyHandler = () => {
     try {
@@ -75,7 +75,7 @@ const TranslatedText = () => {
       debounce((text: string, targetLang: string, sourceLang: string) => {
         translateHandler(text, targetLang, sourceLang);
       }, 300),
-    []
+    [translateHandler]
   );
 
   // Actualizar la traducción cuando cambie el texto o los idiomas.
@@ -125,7 +125,7 @@ const TranslatedText = () => {
         abortControllerRef.current.abort();
       }
     };
-  }, [text, tl, sl, debouncedTranslateHandler]);
+  }, [text, tl, sl, debouncedTranslateHandler, setURLSearchParams, translatedText]);
 
   // Keep previous language refs in sync for swap detection
   React.useEffect(() => {
