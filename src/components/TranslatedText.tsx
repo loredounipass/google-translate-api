@@ -183,7 +183,7 @@ const Container = styled.div<{ $rtl: boolean }>`
   div {
     padding: 16px;
     overflow: auto;
-    max-height: 52vh;
+    max-height: 68vh;
 
     &::-webkit-scrollbar {
       width: 8px;

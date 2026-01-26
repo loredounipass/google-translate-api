@@ -23,6 +23,7 @@ const Container = styled.div<{ $hasText: boolean }>`
   font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   font-weight: 400;
   line-height: 1.4;
+  max-height: 100vh;
 
   textarea {
     width: 100%;
@@ -39,6 +40,7 @@ const Container = styled.div<{ $hasText: boolean }>`
     font-size: 18px;
     resize: none;
     transition: all 0.1s ease;
+    
 
     &:focus {
       outline: none;
@@ -695,18 +697,9 @@ const TranslationTextField = () => {
         )}
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
-        <label style={{ color: '#bbb', fontSize: 12 }}>Entrada:</label>
+       
         
-        <select
-          value={selectedDeviceId || ''}
-          onChange={(e) => setSelectedDeviceId(e.target.value || null)}
-          aria-label="Seleccionar dispositivo de entrada"
-        >
-          {devices.length === 0 && <option value="">Predeterminado</option>}
-          {devices.map(d => (
-            <option key={d.deviceId} value={d.deviceId}>{d.label || d.deviceId}</option>
-          ))}
-        </select>
+       
         <button onClick={async () => {
           try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
