@@ -133,18 +133,21 @@ const TranslationTextField = () => {
   const sl = searchParams.get("sl") || DEFAULT_SOURCE_LANGUAGE;
   const [voices, setVoices] = React.useState<SpeechSynthesisVoice[]>([]);
   const [isProcessing, setIsProcessing] = React.useState(false);
-  const [devices, setDevices] = React.useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = React.useState<string | null>(null);
   const audioContextRef = React.useRef<AudioContext | null>(null);
   const mediaStreamRef = React.useRef<MediaStream | null>(null);
   const analyserRef = React.useRef<AnalyserNode | null>(null);
   const vadIntervalRef = React.useRef<number | null>(null);
   const silenceTimerRef = React.useRef<number | null>(null);
-    const activeFramesRef = React.useRef<number>(0);
-    const silentFramesRef = React.useRef<number>(0);
+  const activeFramesRef = React.useRef<number>(0);
+  const silentFramesRef = React.useRef<number>(0);
   const rmsSmoothRef = React.useRef<number>(0);
   const noiseFloorRef = React.useRef<number>(1);
+  const floatDataRef = React.useRef<Float32Array | null>(null);
+  const byteDataRef = React.useRef<Uint8Array | null>(null);
   const fftDataRef = React.useRef<Uint8Array | null>(null);
+  const fftSizeRef = React.useRef<number>(0);
+  const currentAnalyserRef = React.useRef<AnalyserNode | null>(null);
   const [voiceCache, setVoiceCache] = React.useState<Record<string, SpeechSynthesisVoice>>({});
   const {
     transcript,
@@ -189,6 +192,12 @@ const TranslationTextField = () => {
   const spectralFlatnessThreshold = 0.45; // umbral relajado para mayor sensibilidad
   const zeroCrossingThreshold = 0.18; // umbral relajado para mejor respuesta
   const windNoiseThreshold = 35; // energía baja en medios/altos = viento/respiración
+
+  // Límite máximo de caracteres para el transcript acumulado (previene memory leak)
+  const MAX_TRANSCRIPT_LENGTH = 10000;
+  
+  // Límite máximo para URL params (los navegadores tienen límites en la longitud de URLs)
+  const MAX_URL_TEXT_LENGTH = 8000;
 
   // Optimized voice loading with caching
   React.useEffect(() => {
@@ -241,7 +250,6 @@ const TranslationTextField = () => {
         stream.getTracks().forEach(t => t.stop());
         const list = await navigator.mediaDevices.enumerateDevices();
         const inputs = list.filter(d => d.kind === 'audioinput');
-        setDevices(inputs);
         if (inputs.length > 0 && !selectedDeviceId) setSelectedDeviceId(inputs[0].deviceId);
       } catch (err) {
         console.warn('No se pudo acceder a dispositivos de audio', err);
@@ -254,15 +262,21 @@ const TranslationTextField = () => {
   const setTextParam = React.useCallback((value: string) => {
     const trimmedValue = value.trim() === "" ? "" : value;
     setText(trimmedValue);
+    
+    // Truncar texto para URL (previene problemas con URLs muy largas)
+    const truncatedValue = trimmedValue.length > MAX_URL_TEXT_LENGTH
+      ? trimmedValue.slice(0, MAX_URL_TEXT_LENGTH)
+      : trimmedValue;
+    
     setURLSearchParams((params) => {
-      if (trimmedValue === "") {
+      if (truncatedValue === "") {
         params.delete("text");
       } else {
-        params.set("text", trimmedValue);
+        params.set("text", truncatedValue);
       }
       return params;
     });
-  }, [setURLSearchParams]);
+  }, [setURLSearchParams, MAX_URL_TEXT_LENGTH]);
 
   // Sync local `text` state when the URL `text` param changes externally
   // (for example, when the user swaps languages and another component
@@ -354,6 +368,14 @@ const TranslationTextField = () => {
         // Reset VAD counters
         activeFramesRef.current = 0;
         silentFramesRef.current = 0;
+        
+        // Limpiar refs de buffers (previene memory leak)
+        floatDataRef.current = null;
+        byteDataRef.current = null;
+        fftDataRef.current = null;
+        fftSizeRef.current = 0;
+        currentAnalyserRef.current = null;
+        analyserRef.current = null;
       }
 
       if (mediaStreamRef.current) {
@@ -369,14 +391,12 @@ const TranslationTextField = () => {
           audioContextRef.current = null;
         }
       }
-
-      if (shouldClose) analyserRef.current = null;
     } catch (err) {
       console.warn('Error during cleanupAudioProcessing', err);
     }
   }, []);
 
-  // Inicializa WebAudio con constraints para mejorar la captura
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const setupAudioProcessing = React.useCallback(async (deviceId: string | null) => {
     try {
       // Si ya existe un stream, limpiarlo
@@ -416,6 +436,7 @@ const TranslationTextField = () => {
     } catch (err) {
       console.error('No se pudo inicializar audio:', err);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cleanupAudioProcessing]);
 
   // Asegura que la captura de audio esté activa (sin iniciar el reconocimiento)
@@ -429,19 +450,30 @@ const TranslationTextField = () => {
     }
   }, [selectedDeviceId, setupAudioProcessing]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const startVAD = React.useCallback(() => {
     if (!analyserRef.current) return;
     const analyser = analyserRef.current;
+    currentAnalyserRef.current = analyser;
 
-    // Buffer para lectura de float (más precisión si está disponible)
-    const floatData = new Float32Array(analyser.fftSize);
-    const fftData = new Uint8Array(analyser.frequencyBinCount);
-    fftDataRef.current = fftData;
+    // Crear buffers UNA SOLA VEZ y reutilizarlos (previene memory leak)
+    if (!floatDataRef.current || fftSizeRef.current !== analyser.fftSize) {
+      floatDataRef.current = new Float32Array(analyser.fftSize);
+      byteDataRef.current = new Uint8Array(analyser.fftSize);
+      fftDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+      fftSizeRef.current = analyser.fftSize;
+    }
+
+    const floatData = floatDataRef.current;
+    const byteData = byteDataRef.current;
+    const fftData = fftDataRef.current;
 
     // Comprobar nivel RMS en intervalos regulares con análisis espectral para voces en música
     vadIntervalRef.current = window.setInterval(() => {
+      const analyser = currentAnalyserRef.current;
+      if (!analyser || !floatData || !byteData || !fftData) return;
+
       // Usar getByteTimeDomainData (más rápido que getFloatTimeDomainData)
-      const byteData = new Uint8Array(analyser.fftSize);
       analyser.getByteTimeDomainData(byteData);
       for (let i = 0; i < byteData.length; i++) {
         floatData[i] = (byteData[i] - 128) / 128;
@@ -582,7 +614,7 @@ const TranslationTextField = () => {
           }
       }
     }, vadCheckInterval);
-  }, [listening]);
+  }, [listening, vadCheckInterval, baseVolumeThreshold, adaptiveMultiplier, peakVoiceThreshold, formantRatioThreshold, spectralCentroidThreshold, spectralFlatnessThreshold, zeroCrossingThreshold, windNoiseThreshold, silenceTimeout, activeHoldCount, silenceHoldCount, rmsSmoothingAlpha]);
 
   const handleSpeak = () => {
     if (speaking) {
@@ -598,40 +630,25 @@ const TranslationTextField = () => {
     }
   };
 
-  // Sistema mejorado para capturar audio y pasarlo al texto para traducción
   const previousTranscriptRef = React.useRef("");
   
   React.useEffect(() => {
     if (!listening) return;
-    // Si el usuario editó manualmente recientemente, no sobrescribimos
     if (manualEditRef.current) return;
 
     if (transcript && transcript !== previousTranscriptRef.current) {
-      // Actualizar el texto solo cuando hay cambios reales en la transcripción
       previousTranscriptRef.current = transcript;
       
-      // Usar high priority para asegurar que la actualización sea inmediata
-      window.setTimeout(() => {
-        setTextParam(transcript);
-      }, 0);
-    }
-  }, [transcript, setTextParam, listening]);
-
-  // Único efecto para manejar la transcripción, optimizado para mayor velocidad y sensibilidad
-  React.useEffect(() => {
-    if (!listening) return;
-    // Evitar sobrescribir si el usuario editó manualmente hace poco
-    if (manualEditRef.current) return;
-
-    // Procesar incluso transcripciones muy cortas para mayor sensibilidad
-    if (transcript) {
-      // Usar requestAnimationFrame para optimizar rendimiento
+      // Limitar longitud del transcript para prevenir memory leaks
+      const truncatedTranscript = transcript.length > MAX_TRANSCRIPT_LENGTH
+        ? transcript.slice(-MAX_TRANSCRIPT_LENGTH)
+        : transcript;
+      
       requestAnimationFrame(() => {
-        setTextParam(transcript);
+        setTextParam(truncatedTranscript);
       });
     }
-    
-  }, [transcript, setTextParam, listening]);
+  }, [transcript, setTextParam, listening, MAX_TRANSCRIPT_LENGTH]);
 
   // Optimized voice selection using cache
   React.useEffect(() => {
@@ -689,6 +706,7 @@ const TranslationTextField = () => {
           aria-label="Texto para traducción"
           autoFocus
           spellCheck={false}
+          maxLength={MAX_URL_TEXT_LENGTH}
         ></textarea>
         {text && (
           <button className="text-clear" onClick={clearTextHandler} aria-label="Limpiar texto">
@@ -697,16 +715,15 @@ const TranslationTextField = () => {
         )}
       </div>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
-       
+        <span style={{ fontSize: 11, color: '#999' }}>
+          {text.length.toLocaleString()} / {MAX_URL_TEXT_LENGTH.toLocaleString()}
+        </span>
         
-       
+        
         <button onClick={async () => {
           try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             stream.getTracks().forEach(t => t.stop());
-            const list = await navigator.mediaDevices.enumerateDevices();
-            const inputs = list.filter(d => d.kind === 'audioinput');
-            setDevices(inputs);
           } catch (err) { console.warn(err); }
         }} style={{ background: 'none', border: 'none', color: '#333', cursor: 'pointer' }} aria-label="Refrescar dispositivos">↻</button>
       </div>

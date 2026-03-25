@@ -220,25 +220,27 @@ export const translate = async (
   }
 
   try {
-    // Si el texto es demasiado largo, dividirlo y traducir por partes
     if (cleanedText.length > MAX_TEXT_LENGTH) {
       const chunks = splitText(cleanedText, MAX_TEXT_LENGTH);
-        const translatedChunks = await Promise.all(
-        chunks.map(async (chunk) => {
-          const response = await callTranslationAPI({
-            q: chunk,
-            source: effectiveSource,
-            target: targetLang,
-          });
+      const translatedChunks: string[] = [];
 
-          return processTranslationResponse(response);
-        })
-      );
-      
+      for (const chunk of chunks) {
+        if (options?.signal?.aborted) {
+          throw new DOMException('Translation aborted', 'AbortError');
+        }
+
+        const response = await callTranslationAPI({
+          q: chunk,
+          source: effectiveSource,
+          target: targetLang,
+        });
+
+        translatedChunks.push(processTranslationResponse(response));
+      }
+
       return translatedChunks.join(' ');
     }
     
-    // Para textos cortos, traducir directamente
     const response = await callTranslationAPI({
       q: cleanedText,
       source: effectiveSource,
