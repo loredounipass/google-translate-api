@@ -328,7 +328,7 @@ const TranslationTextField = () => {
         await SpeechRecognition.stopListening();
         if (!keepMicOnRef.current) await cleanupAudioProcessing();
       } else {
-        if (!isMicrophoneAvailable) {
+        if (isMicrophoneAvailable === false) {
           alert("Por favor permite acceso al micrófono");
           return;
         }
@@ -398,10 +398,50 @@ const TranslationTextField = () => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const setupAudioProcessing = React.useCallback(async (deviceId: string | null) => {
-    try {
-      // Si ya existe un stream, limpiarlo
-      await cleanupAudioProcessing();
+    // Guardar refs viejas antes de tocarlas
+    const oldAudioCtx = audioContextRef.current;
+    const oldStream = mediaStreamRef.current;
+    const shouldClose = !keepMicOnRef.current;
 
+    // PASO 1: Crear el AudioContext NUEVO ANTES de cualquier await (crítico para móviles)
+    const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+    const audioCtx = new AudioContextClass();
+    audioContextRef.current = audioCtx;
+    if (audioCtx.state === 'suspended') {
+      await audioCtx.resume();
+    }
+
+    try {
+      // PASO 2: Limpiar recursos VIEJOS (VAD, stream, AudioContext anterior)
+      if (shouldClose) {
+        if (vadIntervalRef.current) {
+          window.clearInterval(vadIntervalRef.current);
+          vadIntervalRef.current = null;
+        }
+        if (silenceTimerRef.current) {
+          window.clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = null;
+        }
+        activeFramesRef.current = 0;
+        silentFramesRef.current = 0;
+        floatDataRef.current = null;
+        byteDataRef.current = null;
+        fftDataRef.current = null;
+        fftSizeRef.current = 0;
+        currentAnalyserRef.current = null;
+        analyserRef.current = null;
+      }
+
+      if (oldStream && shouldClose) {
+        oldStream.getTracks().forEach(t => t.stop());
+      }
+      mediaStreamRef.current = null;
+
+      if (oldAudioCtx && shouldClose) {
+        try { await oldAudioCtx.close(); } catch(e) {}
+      }
+
+      // PASO 3: Obtener nuevo stream de micrófono
       const constraints: MediaStreamConstraints = {
         audio: {
           deviceId: deviceId ? { exact: deviceId } : undefined,
@@ -410,34 +450,28 @@ const TranslationTextField = () => {
           autoGainControl: true
         }
       };
-
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       mediaStreamRef.current = stream;
 
-      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
-      const audioCtx = new AudioContextClass();
-      audioContextRef.current = audioCtx;
-
+      // PASO 4: Construir pipeline con el AudioContext creado en el paso 1
       const source = audioCtx.createMediaStreamSource(stream);
       const compressor = audioCtx.createDynamicsCompressor();
       const gain = audioCtx.createGain();
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 2048;
 
-      // Conectar: source -> compressor -> gain -> analyser (no conectar a destino)
       source.connect(compressor);
       compressor.connect(gain);
       gain.connect(analyser);
 
       analyserRef.current = analyser;
 
-      // Iniciar VAD simple
       startVAD();
     } catch (err) {
       console.error('No se pudo inicializar audio:', err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cleanupAudioProcessing]);
+  }, []);
 
   // Asegura que la captura de audio esté activa (sin iniciar el reconocimiento)
   const ensureAudioStreamActive = React.useCallback(async () => {
@@ -766,8 +800,8 @@ const TranslationTextField = () => {
             <button 
               onMouseDown={() => { if (!mediaStreamRef.current && keepMicOn) ensureAudioStreamActive(); }}
               onTouchStart={() => { if (!mediaStreamRef.current && keepMicOn) ensureAudioStreamActive(); }}
-              onClick={() => { if (keepMicOn || listening) handleSpeech(); }}
-              disabled={isProcessing || (!isMicrophoneAvailable && !keepMicOn) || (!keepMicOn && !listening)}
+              onClick={handleSpeech}
+              disabled={isProcessing}
               aria-label={listening ? "Detener reconocimiento" : "Iniciar reconocimiento"}
             >
               {listening ? <PauseIcon /> : <MicIcon />}
