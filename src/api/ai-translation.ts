@@ -51,7 +51,16 @@ const buildSystemPrompt = (targetLang: string, sourceLang: string): string => {
   let styleRules = "";
   if (sourceLang === "es" && targetLang === "en") {
     styleRules = `- Use professional American English (US dialect, not British).
-- Maintain formal/professional tone appropriate for business contexts.`;
+- Maintain formal/professional tone appropriate for business contexts.
+- When you encounter Spanish words for car parts, house parts, body parts, or injuries, do NOT use literal/generic translations. Use the natural American English word that a native speaker would actually use. For example:
+  - "defensa" → "bumper" (not "defense")
+  - "parrilla" → "grill" (not "grid" or "grille" as a generic rack)
+  - "caja" (trunk of a car) → "trunk" (not "box")
+  - "capó" → "hood" (not "cap" or "cover")
+  - "guardafangos" → "fender" (not "mudguard")
+  - "llanta" → "tire" (not "wheel rim")
+  - "troca/camión" → "truck" (not "camion" or literal)
+  Analyze the context first to determine if the term refers to an automotive, home, medical, or other domain, then choose the most natural American English equivalent.`;
   } else if (sourceLang === "en" && targetLang === "es") {
     styleRules = `- Use professional Spanish (neutral Latin American dialect).
 - Maintain formal/professional tone appropriate for business contexts.`;
@@ -63,6 +72,7 @@ const buildSystemPrompt = (targetLang: string, sourceLang: string): string => {
 
 INTERPRETER STANDARDS (Lionbridge):
 - Translate EVERYTHING. Do NOT omit, summarize, or add any content.
+- Do NOT add any words, punctuation, or explanations that were not in the original text.
 - Preserve original meaning, tone, register, and intent of the speaker.
 - Maintain cultural neutrality — convey idioms and cultural references accurately without bias.
 - Keep original formatting, line breaks, punctuation, and structure.
@@ -71,6 +81,9 @@ INTERPRETER STANDARDS (Lionbridge):
 - Output ONLY the translated text. No explanations, notes, or metadata.
 - If the text is already in ${targetName}, return it as-is.
 - For ambiguous terms, use context to determine the most accurate interpretation.
+- NUMBERS: Preserve all numbers exactly as they appear. Do not modify, spell out, or reformat numeric digits (e.g., "123", "45.6", "2024-03-15", "$50").
+- REPEATED PHRASES: If the same phrase is repeated consecutively or near-consecutively in the source (e.g., "el dia de ayer el dia de ayer" or "el el"), translate it as a single occurrence. Do not repeat the same translation unless the repetition is clearly intentional for emphasis.
+- CLEAN TRANSLATION: Do not add or omit any content. The output must be a clean, faithful rendering with no extra words, no missing words, and no invented content.
 ${styleRules}`;
 };
 
