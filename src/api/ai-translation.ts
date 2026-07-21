@@ -50,41 +50,51 @@ const buildSystemPrompt = (targetLang: string, sourceLang: string): string => {
 
   let styleRules = "";
   if (sourceLang === "es" && targetLang === "en") {
-    styleRules = `- Use professional American English (US dialect, not British).
+    styleRules = `
+STYLE RULES (es→en) - MANDATORY:
+- Use professional American English (US dialect, not British).
 - Maintain formal/professional tone appropriate for business contexts.
-- When you encounter Spanish words for car parts, house parts, body parts, or injuries, do NOT use literal/generic translations. Use the natural American English word that a native speaker would actually use. For example:
-  - "defensa" → "bumper" (not "defense")
-  - "parrilla" → "grill" (not "grid" or "grille" as a generic rack)
-  - "caja" (trunk of a car) → "trunk" (not "box")
-  - "capó" → "hood" (not "cap" or "cover")
-  - "guardafangos" → "fender" (not "mudguard")
-  - "llanta" → "tire" (not "wheel rim")
-  - "troca/camión" → "truck" (not "camion" or literal)
-  Analyze the context first to determine if the term refers to an automotive, home, medical, or other domain, then choose the most natural American English equivalent.`;
+- Domain-specific terms MUST use natural American English equivalents:
+  - "defensa" → "bumper" (NOT "defense")
+  - "parrilla" → "grill" (NOT "grid" or "grille")
+  - "caja" (auto) → "trunk" (NOT "box")
+  - "capó" → "hood" (NOT "cap" or "cover")
+  - "guardafangos" → "fender" (NOT "mudguard")
+  - "llanta" → "tire" (NOT "wheel rim")
+  - "troca/camión" → "truck" (NOT "camion" or literal)
+- Analyze context to determine the domain, then choose the most natural American English equivalent.`;
   } else if (sourceLang === "en" && targetLang === "es") {
-    styleRules = `- Use professional Spanish (neutral Latin American dialect).
+    styleRules = `
+STYLE RULES (en→es) - MANDATORY:
+- Use professional Spanish (neutral Latin American dialect).
 - Maintain formal/professional tone appropriate for business contexts.`;
   } else {
-    styleRules = `- Use professional and natural language in the target language.`;
+    styleRules = `
+STYLE RULES - MANDATORY:
+- Use professional and natural language in the target language.`;
   }
 
-  return `You are a professional interpreter following Lionbridge quality standards. Translate the following text from ${sourceName} to ${targetName}.
+  return `You are a professional interpreter. You MUST obey the following rules. They are STRICT and MANDATORY.
 
-INTERPRETER STANDARDS (Lionbridge):
-- Translate EVERYTHING. Do NOT omit, summarize, or add any content.
-- Do NOT add any words, punctuation, or explanations that were not in the original text.
-- Preserve original meaning, tone, register, and intent of the speaker.
-- Maintain cultural neutrality — convey idioms and cultural references accurately without bias.
-- Keep original formatting, line breaks, punctuation, and structure.
-- Interpret in first person when the source uses first person ("I", "we").
-- Maintain consistent terminology throughout the translation.
-- Output ONLY the translated text. No explanations, notes, or metadata.
-- If the text is already in ${targetName}, return it as-is.
-- For ambiguous terms, use context to determine the most accurate interpretation.
-- NUMBERS: Preserve all numbers exactly as they appear. Do not modify, spell out, or reformat numeric digits (e.g., "123", "45.6", "2024-03-15", "$50").
-- REPEATED PHRASES: If the same phrase is repeated consecutively or near-consecutively in the source (e.g., "el dia de ayer el dia de ayer" or "el el"), translate it as a single occurrence. Do not repeat the same translation unless the repetition is clearly intentional for emphasis.
-- CLEAN TRANSLATION: Do not add or omit any content. The output must be a clean, faithful rendering with no extra words, no missing words, and no invented content.
-${styleRules}`;
+CRITICAL RULES - You MUST follow these WITHOUT EXCEPTION:
+1. OUTPUT ONLY the translated text. NEVER add explanations, notes, metadata, or any text outside the translation.
+2. Translate EVERYTHING. NEVER omit, summarize, or skip content.
+3. NEVER add or remove words, punctuation, or content.
+4. PRESERVE numbers exactly as they appear: "123", "45.6", "$50", "2024-03-15".
+5. If the text is already in ${targetName}, return it AS-IS.
+6. REPEATED PHRASES: if the same phrase appears consecutively (e.g., "el dia de ayer el dia de ayer"), translate it ONCE only.
+7. Interpret in first person when source uses "I" or "we".
+8. Preserve original formatting, line breaks, and structure.
+${styleRules}
+
+<output_validation>
+BEFORE responding, verify:
+(1) Is there any text outside the translation? If yes, REMOVE IT.
+(2) Are all numbers preserved exactly?
+(3) Is every source word accounted for?
+(4) Did you avoid adding any new words?
+If any check fails, fix your output. Respond with ONLY the translated text.
+</output_validation>`;
 };
 
 const normalizeText = (text: string): string =>
@@ -104,7 +114,7 @@ export const translate = async (
   if (cached) return cached;
 
   const systemPrompt = buildSystemPrompt(targetLang, sourceLang);
-  const userPrompt = `Interpret and translate the following text:\n\n${cleanedText}`;
+  const userPrompt = `Translate the following text to ${getLanguageName(targetLang)}. Output ONLY the translation, nothing else:\n\n${cleanedText}`;
 
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
