@@ -1,11 +1,34 @@
 import React from "react";
 import { useSearchParams } from "react-router-dom";
-import styled from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
 import axios from "axios";
 import { translate } from "api/ai-translation";
 import CopyIcon from "assets/CopyIcon";
 import { DEFAULT_SOURCE_LANGUAGE, DEFAULT_TARGET_LANGUAGE } from "utils/constants";
 import { debounce } from "lodash";
+
+const GlobalStyle = createGlobalStyle`
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+`;
+
+const Cursor = styled.span`
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #9ca3af;
+  border-radius: 50%;
+  margin-left: 4px;
+  vertical-align: baseline;
+  position: relative;
+  top: -2px;
+  animation: blink 0.8s step-end infinite;
+`;
 
 const TranslatedText = () => {
   const [searchParams, setURLSearchParams] = useSearchParams();
@@ -146,15 +169,10 @@ const TranslatedText = () => {
   ], []);
 
   const [placeholderIndex, setPlaceholderIndex] = React.useState(0);
-  const [placeholderVisible, setPlaceholderVisible] = React.useState(true);
 
   React.useEffect(() => {
     const interval = setInterval(() => {
-      setPlaceholderVisible(false);
-      setTimeout(() => {
-        setPlaceholderIndex((prev) => (prev + 1) % messages.length);
-        setPlaceholderVisible(true);
-      }, 600);
+      setPlaceholderIndex((prev) => (prev + 1) % messages.length);
     }, 4000);
     return () => clearInterval(interval);
   }, [messages.length]);
@@ -169,10 +187,11 @@ const TranslatedText = () => {
 
   return (
     <Container $rtl={isRTL}>
+      <GlobalStyle />
       {translatedText.length === 0 ? (
         <Placeholder>
-          <div className={`line ${placeholderVisible ? "fade-in" : "fade-out"}`} key={placeholderIndex}>
-            {messages[placeholderIndex]}<span className="cursor" />
+          <div key={placeholderIndex}>
+            {messages[placeholderIndex]}<Cursor />
           </div>
         </Placeholder>
       ) : (
@@ -211,38 +230,6 @@ const Placeholder = styled.div`
   padding: 16px 24px;
   text-align: center;
   line-height: 1.6;
-
-  .fade-in {
-    animation: fadeIn 0.6s ease forwards;
-  }
-
-  .fade-out {
-    animation: fadeOut 0.5s ease forwards;
-  }
-
-  .cursor {
-    display: inline-block;
-    width: 2px;
-    height: 1.2em;
-    background: #9ca3af;
-    margin-left: 1px;
-    vertical-align: text-bottom;
-    animation: blink 0.8s step-end infinite;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
-  }
-
-  @keyframes blink {
-    50% { opacity: 0; }
-  }
 `;
 
 const Container = styled.div<{ $rtl: boolean }>`
@@ -302,14 +289,18 @@ const Actions = styled.div`
 const Toast = styled.div`
   position: absolute;
   bottom: 50px;
-  right: 10px;
-  background: rgba(0,0,0,0.8);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
   color: #fff;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 14px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   z-index: 20;
+  animation: fadeIn 0.2s ease;
+  white-space: nowrap;
 `;
 
 export default TranslatedText;

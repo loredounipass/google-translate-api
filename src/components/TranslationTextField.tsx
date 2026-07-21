@@ -8,12 +8,30 @@ import MicIcon from "assets/MicIcon";
 import PauseIcon from "assets/PauseIcon";
 import { DEFAULT_SOURCE_LANGUAGE } from "utils/constants";
 
-const GlobalStyle = createGlobalStyle`
-  @keyframes pulse {
-    0% { transform: scale(0.95); opacity: 0.7; }
-    70% { transform: scale(1.1); opacity: 0.3; }
-    100% { transform: scale(0.95); opacity: 0.7; }
-  }
+const Cursor = styled.span`
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #9ca3af;
+  border-radius: 50%;
+  margin-left: 4px;
+  vertical-align: baseline;
+  position: relative;
+  top: -2px;
+  animation: blink 0.8s step-end infinite;
+`;
+
+const PlaceholderOverlay = styled.div<{ $visible: boolean }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 40px 24px 16px;
+  font-size: 18px;
+  color: #9ca3af;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  pointer-events: none;
+  display: ${(props) => (props.$visible ? "block" : "none")};
 `;
 
 const Container = styled.div<{ $hasText: boolean }>`
@@ -71,6 +89,17 @@ const Container = styled.div<{ $hasText: boolean }>`
     &:hover {
       opacity: 0.8;
     }
+  }
+`;
+
+const GlobalStyle = createGlobalStyle`
+  @keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.7; }
+    70% { transform: scale(1.1); opacity: 0.3; }
+    100% { transform: scale(0.95); opacity: 0.7; }
+  }
+  @keyframes blink {
+    50% { opacity: 0; }
   }
 `;
 
@@ -170,6 +199,29 @@ const TranslationTextField = () => {
     }
   });
   const keepMicOnRef = React.useRef<boolean>(keepMicOn);
+  const PLACEHOLDER_TEXT = "Start typing..";
+  const [placeholder, setPlaceholder] = React.useState("");
+
+  React.useEffect(() => {
+    if (text) return;
+    let timer: number | null = null;
+    let index = 0;
+    const type = () => {
+      index++;
+      if (index > PLACEHOLDER_TEXT.length) {
+        timer = window.setTimeout(() => {
+          setPlaceholder("");
+          index = 0;
+          type();
+        }, 4000);
+        return;
+      }
+      setPlaceholder(PLACEHOLDER_TEXT.slice(0, index));
+      timer = window.setTimeout(type, 80);
+    };
+    type();
+    return () => { if (timer !== null) window.clearTimeout(timer); };
+  }, [text === ""]);
 
   // VAD (Voice Activity Detection) settings - OPTIMIZED FOR VOICE IN MUSIC & NOISE REJECTION
   // Detección: voces en canciones, susurros, gritos | Ignora: viento, respiración, ruido blanco
@@ -666,12 +718,15 @@ const TranslationTextField = () => {
   return (
     <Container $hasText={!!text}>
       <GlobalStyle />
-      <div style={{ height: "100%" }}>
+      <div style={{ height: "100%", position: "relative" }}>
+        <PlaceholderOverlay $visible={!text && !!placeholder}>
+          {placeholder}<Cursor />
+        </PlaceholderOverlay>
         <textarea
           ref={textareaRef}
           value={text}
           onChange={handleChangeText}
-          placeholder="Start typing.."
+          placeholder=""
           aria-label="Texto para traducción"
           autoFocus
           spellCheck={false}
