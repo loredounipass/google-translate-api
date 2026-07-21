@@ -608,6 +608,15 @@ const TranslationTextField = () => {
   }, [listening, vadCheckInterval, baseVolumeThreshold, adaptiveMultiplier, peakVoiceThreshold, formantRatioThreshold, spectralCentroidThreshold, spectralFlatnessThreshold, zeroCrossingThreshold, windNoiseThreshold, silenceTimeout, activeHoldCount, silenceHoldCount, rmsSmoothingAlpha]);
 
   const previousTranscriptRef = React.useRef("");
+
+  const addPunctuation = (text: string): string => {
+    const trimmed = text.trim();
+    if (!trimmed || /[.!?…]$/.test(trimmed)) return trimmed;
+    const questionWords = /^(what|who|where|when|why|how|which|do|does|did|is|are|was|were|can|could|will|would|shall|should|may|might|am|has|have|had|que|qué|quien|quién|donde|dónde|cuando|cuándo|como|cómo|por qué|porque|cuál|cual|cuáles|cuales)$/i;
+    const firstWord = trimmed.split(/\s+/)[0];
+    if (questionWords.test(firstWord)) return trimmed + '?';
+    return trimmed + '.';
+  };
   
   React.useEffect(() => {
     if (!listening) return;
@@ -616,16 +625,16 @@ const TranslationTextField = () => {
     if (transcript && transcript !== previousTranscriptRef.current) {
       previousTranscriptRef.current = transcript;
       
-      // Limitar longitud del transcript para prevenir memory leaks
-      const truncatedTranscript = transcript.length > MAX_TRANSCRIPT_LENGTH
-        ? transcript.slice(-MAX_TRANSCRIPT_LENGTH)
-        : transcript;
+      const punctuated = addPunctuation(transcript);
+      const truncated = punctuated.length > MAX_URL_TEXT_LENGTH
+        ? punctuated.slice(-MAX_URL_TEXT_LENGTH)
+        : punctuated;
       
       requestAnimationFrame(() => {
-        setTextParam(truncatedTranscript);
+        setTextParam(truncated);
       });
     }
-  }, [transcript, setTextParam, listening, MAX_TRANSCRIPT_LENGTH]);
+  }, [transcript, setTextParam, listening, MAX_URL_TEXT_LENGTH]);
 
   React.useEffect(() => {
     if (textareaRef.current && !listening) {
