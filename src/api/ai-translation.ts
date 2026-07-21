@@ -2,7 +2,7 @@ import axios from "axios";
 import LRUCache from "lru-cache";
 
 const NVIDIA_API_URL = "/api/nvidia/chat/completions";
-const MODEL = "mistralai/mistral-medium-3.5-128b";
+const MODEL = "mistralai/mistral-small-4-119b-2603";
 
 const MAX_RETRIES = 3;
 const BASE_DELAY = 1000;
