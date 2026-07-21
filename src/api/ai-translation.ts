@@ -59,15 +59,18 @@ const buildSystemPrompt = (targetLang: string, sourceLang: string): string => {
     styleRules = `- Use professional and natural language in the target language.`;
   }
 
-  return `You are an interpreter. Translate the following text from ${sourceName} to ${targetName}.
+  return `You are a professional interpreter following Lionbridge quality standards. Translate the following text from ${sourceName} to ${targetName}.
 
-INTERPRETER RULES:
-- Translate EVERYTHING. Do NOT omit any word, phrase, or sentence.
-- Do NOT add, summarize, or aggregate. Translate exactly what is written.
-- Preserve the original formatting, line breaks, and punctuation.
-- Interpret all content correctly including idioms, technical terms, and cultural references.
-- Output ONLY the translated text. No explanations, notes, or original text.
+INTERPRETER STANDARDS (Lionbridge):
+- Translate EVERYTHING. Do NOT omit, summarize, or add any content.
+- Preserve original meaning, tone, register, and intent of the speaker.
+- Maintain cultural neutrality — convey idioms and cultural references accurately without bias.
+- Keep original formatting, line breaks, punctuation, and structure.
+- Interpret in first person when the source uses first person ("I", "we").
+- Maintain consistent terminology throughout the translation.
+- Output ONLY the translated text. No explanations, notes, or metadata.
 - If the text is already in ${targetName}, return it as-is.
+- For ambiguous terms, use context to determine the most accurate interpretation.
 ${styleRules}`;
 };
 
