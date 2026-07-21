@@ -2,7 +2,8 @@ import React from "react";
 import { useSearchParams } from "react-router-dom";
 import { useSpeechSynthesis } from "react-speech-kit";
 import styled from "styled-components";
-import { translate } from "api/freetranslation";
+import axios from "axios";
+import { translate } from "api/ai-translation";
 import CopyIcon from "assets/CopyIcon";
 import { DEFAULT_SOURCE_LANGUAGE, DEFAULT_TARGET_LANGUAGE } from "utils/constants";
 import { debounce } from "lodash";
@@ -20,6 +21,7 @@ const TranslatedText = () => {
   const currentTextRef = React.useRef(text);
   const prevSlRef = React.useRef<string | null>(null);
   const prevTlRef = React.useRef<string | null>(null);
+  const hasTranslatedRef = React.useRef(false);
 
   const translateHandler = React.useCallback(async (value: string, targetLang: string, sourceLang: string) => {
     if (!value || value !== currentTextRef.current) {
@@ -39,7 +41,7 @@ const TranslatedText = () => {
       });
       
       if (translated) {
-        // Preservar mayúsculas y formato de la API, sólo recortar líneas vacías
+        hasTranslatedRef.current = true;
         const normalizedText = translated
           .split("\n")
           .map(line => line.trim())
@@ -47,7 +49,8 @@ const TranslatedText = () => {
         setTranslatedText(normalizedText.length ? normalizedText : [translated.trim()]);
       }
     } catch (error) {
-      if (!(error instanceof DOMException)) { // Ignore abort errors
+      if (axios.isCancel(error)) return;
+      if (!(error instanceof DOMException)) {
         console.error("Error de traducción:", error);
         setTranslatedText(["<< Error en la traducción >>"]);
       }
@@ -90,7 +93,7 @@ const TranslatedText = () => {
       prevTlRef.current !== null &&
       sl === prevTlRef.current &&
       tl === prevSlRef.current &&
-      translatedText.length > 0
+      hasTranslatedRef.current
     ) {
       const newText = translatedText.join("\n");
       if (text !== newText) {
@@ -125,7 +128,7 @@ const TranslatedText = () => {
         abortControllerRef.current.abort();
       }
     };
-  }, [text, tl, sl, debouncedTranslateHandler, setURLSearchParams, translatedText]);
+  }, [text, tl, sl, debouncedTranslateHandler, setURLSearchParams]);
 
   // Keep previous language refs in sync for swap detection
   React.useEffect(() => {
