@@ -1,5 +1,6 @@
 import React from "react";
 import styled, { createGlobalStyle } from "styled-components";
+import { message } from "antd";
 import CloseIcon from "../assets/CloseIcon";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
 import { useSpeechSynthesis } from "react-speech-kit";
@@ -328,6 +329,10 @@ const TranslationTextField = () => {
         await SpeechRecognition.stopListening();
         if (!keepMicOnRef.current) await cleanupAudioProcessing();
       } else {
+        if (!keepMicOnRef.current) {
+          message.warning("Debes activar el micrófono");
+          return;
+        }
         if (isMicrophoneAvailable === false) {
           alert("Por favor permite acceso al micrófono");
           return;
