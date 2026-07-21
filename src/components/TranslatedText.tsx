@@ -1,6 +1,5 @@
 import React from "react";
 import { useSearchParams } from "react-router-dom";
-import { useSpeechSynthesis } from "react-speech-kit";
 import styled from "styled-components";
 import axios from "axios";
 import { translate } from "api/ai-translation";
@@ -10,8 +9,6 @@ import { debounce } from "lodash";
 
 const TranslatedText = () => {
   const [searchParams, setURLSearchParams] = useSearchParams();
-  // Se elimina la desestructuración de cancel, speaking y supported, ya que no se usan.
-  useSpeechSynthesis();
   const text = searchParams.get("text") || "";
   const tl = searchParams.get("tl") || DEFAULT_TARGET_LANGUAGE;
   const sl = searchParams.get("sl") || DEFAULT_SOURCE_LANGUAGE;
@@ -128,7 +125,7 @@ const TranslatedText = () => {
         abortControllerRef.current.abort();
       }
     };
-  }, [text, tl, sl, debouncedTranslateHandler, setURLSearchParams]);
+  }, [text, tl, sl, translatedText, debouncedTranslateHandler, setURLSearchParams]);
 
   // Keep previous language refs in sync for swap detection
   React.useEffect(() => {

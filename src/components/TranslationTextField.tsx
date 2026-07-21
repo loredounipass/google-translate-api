@@ -3,11 +3,9 @@ import styled, { createGlobalStyle } from "styled-components";
 import { message } from "antd";
 import CloseIcon from "../assets/CloseIcon";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
-import { useSpeechSynthesis } from "react-speech-kit";
 import { useSearchParams } from "react-router-dom";
 import MicIcon from "assets/MicIcon";
 import PauseIcon from "assets/PauseIcon";
-import SpeakerIcon from "assets/SpeakerIcon";
 import { DEFAULT_SOURCE_LANGUAGE } from "utils/constants";
 
 const GlobalStyle = createGlobalStyle`
@@ -129,10 +127,7 @@ const TranslationTextField = () => {
   const [searchParams, setURLSearchParams] = useSearchParams();
   const [text, setText] = React.useState(searchParams.get("text") || "");
   const urlTextParam = searchParams.get("text") || "";
-  const [voice, setVoice] = React.useState<SpeechSynthesisVoice | null>(null);
-  const { speak, cancel, speaking, supported } = useSpeechSynthesis();
   const sl = searchParams.get("sl") || DEFAULT_SOURCE_LANGUAGE;
-  const [voices, setVoices] = React.useState<SpeechSynthesisVoice[]>([]);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [selectedDeviceId, setSelectedDeviceId] = React.useState<string | null>(null);
   const audioContextRef = React.useRef<AudioContext | null>(null);
@@ -149,7 +144,6 @@ const TranslationTextField = () => {
   const fftDataRef = React.useRef<Uint8Array | null>(null);
   const fftSizeRef = React.useRef<number>(0);
   const currentAnalyserRef = React.useRef<AnalyserNode | null>(null);
-  const [voiceCache, setVoiceCache] = React.useState<Record<string, SpeechSynthesisVoice>>({});
   const {
     transcript,
     listening,
@@ -166,7 +160,6 @@ const TranslationTextField = () => {
     ]
   });
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const voicesInitialized = React.useRef(false);
   const manualEditRef = React.useRef<boolean>(false);
   const manualEditTimeoutRef = React.useRef<number | null>(null);
   const [keepMicOn, setKeepMicOn] = React.useState<boolean>(() => {
@@ -199,46 +192,6 @@ const TranslationTextField = () => {
   
   // Límite máximo para URL params (los navegadores tienen límites en la longitud de URLs)
   const MAX_URL_TEXT_LENGTH = 8000;
-
-  // Optimized voice loading with caching
-  React.useEffect(() => {
-    const loadVoices = () => {
-      // Only fetch voices if we haven't already
-      if (voicesInitialized.current) return;
-      
-      const availableVoices = window.speechSynthesis.getVoices();
-      if (availableVoices.length > 0) {
-        setVoices(availableVoices);
-        
-        // Create voice cache for faster lookups
-        const cache: Record<string, SpeechSynthesisVoice> = {};
-        availableVoices.forEach(voice => {
-          const langPrefix = voice.lang.split('-')[0];
-          if (!cache[langPrefix] || voice.default) {
-            cache[langPrefix] = voice;
-          }
-        });
-        
-        setVoiceCache(cache);
-        voicesInitialized.current = true;
-        
-        // Set initial voice
-        const defaultVoice = availableVoices.find(v => v.default) || availableVoices[0];
-        setVoice(defaultVoice);
-      }
-    };
-    
-    // Try to load voices immediately
-    loadVoices();
-    
-    // Set up event listener as fallback
-    if (!voicesInitialized.current) {
-      window.speechSynthesis.addEventListener("voiceschanged", loadVoices);
-      return () => {
-        window.speechSynthesis.removeEventListener("voiceschanged", loadVoices);
-      };
-    }
-  }, []);
 
   // Solicitar permiso y listar dispositivos al inicio
   React.useEffect(() => {
@@ -296,7 +249,6 @@ const TranslationTextField = () => {
       await SpeechRecognition.stopListening();
       SpeechRecognition.abortListening(); // Forzar el cese inmediato de la escucha
     }
-    cancel();
     // Solo limpiar recursos si el usuario NO quiere mantener el micrófono encendido
     if (!keepMicOnRef.current) await cleanupAudioProcessing();
   };
@@ -655,20 +607,6 @@ const TranslationTextField = () => {
     }, vadCheckInterval);
   }, [listening, vadCheckInterval, baseVolumeThreshold, adaptiveMultiplier, peakVoiceThreshold, formantRatioThreshold, spectralCentroidThreshold, spectralFlatnessThreshold, zeroCrossingThreshold, windNoiseThreshold, silenceTimeout, activeHoldCount, silenceHoldCount, rmsSmoothingAlpha]);
 
-  const handleSpeak = () => {
-    if (speaking) {
-      cancel();
-    } else {
-      speak({ 
-        text,
-        voice,
-        rate: 1.1,
-        pitch: 1,
-        volume: 1
-      });
-    }
-  };
-
   const previousTranscriptRef = React.useRef("");
   
   React.useEffect(() => {
@@ -688,23 +626,6 @@ const TranslationTextField = () => {
       });
     }
   }, [transcript, setTextParam, listening, MAX_TRANSCRIPT_LENGTH]);
-
-  // Optimized voice selection using cache
-  React.useEffect(() => {
-    if (Object.keys(voiceCache).length === 0) return;
-    
-    // Try to find voice by language code
-    const langPrefix = sl.split('-')[0];
-    const cachedVoice = voiceCache[langPrefix];
-    
-    if (cachedVoice) {
-      setVoice(cachedVoice);
-    } else {
-      // Fallback to traditional search if not in cache
-      const matchingVoice = voices.find((v) => v.lang.startsWith(langPrefix));
-      setVoice(matchingVoice || voices[0] || null);
-    }
-  }, [sl, voices, voiceCache]);
 
   React.useEffect(() => {
     if (textareaRef.current && !listening) {
@@ -815,17 +736,6 @@ const TranslationTextField = () => {
         ) : (
           <p>Reconocimiento de voz no soportado</p>
         )}
-        
-        {supported && text && voice && (
-          <button 
-            onClick={handleSpeak}
-            disabled={isProcessing}
-            aria-label={speaking ? "Detener narración" : "Reproducir texto"}
-          >
-            {speaking ? <PauseIcon /> : <SpeakerIcon />}
-          </button>
-        )}
-        
         {!isMicrophoneAvailable && browserSupportsSpeechRecognition && (
           <div className="error-message">
             Micrófono no detectado
