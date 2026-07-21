@@ -1,4 +1,5 @@
 import axios from "axios";
+import LRUCache from "lru-cache";
 
 const NVIDIA_API_URL = "/api/nvidia/chat/completions";
 const MODEL = "meta/llama-3.1-8b-instruct";
@@ -7,7 +8,7 @@ const MAX_RETRIES = 3;
 const BASE_DELAY = 1000;
 
 const CACHE_TTL = 5 * 60 * 1000;
-const translationCache = new Map<string, { result: string; timestamp: number }>();
+const translationCache = new LRUCache<string, string>({ max: 1000, ttl: CACHE_TTL });
 
 const MIN_REQUEST_INTERVAL = 600;
 let lastRequestTime = 0;
@@ -84,9 +85,7 @@ export const translate = async (
 
   const cacheKey = getCacheKey(cleanedText, targetLang, sourceLang);
   const cached = translationCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.result;
-  }
+  if (cached) return cached;
 
   const systemPrompt = buildSystemPrompt(targetLang, sourceLang);
   const userPrompt = `Interpret and translate the following text:\n\n${cleanedText}`;
@@ -132,7 +131,7 @@ export const translate = async (
       const translated = response.data?.choices?.[0]?.message?.content?.trim();
       if (!translated) throw new Error("No se recibió traducción del modelo");
 
-      translationCache.set(cacheKey, { result: translated, timestamp: Date.now() });
+      translationCache.set(cacheKey, translated);
 
       return translated;
     } catch (error) {
