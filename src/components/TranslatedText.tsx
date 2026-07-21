@@ -140,6 +140,28 @@ const TranslatedText = () => {
   const [copied, setCopied] = React.useState(false);
   const copyTimeoutRef = React.useRef<number | null>(null);
 
+  const messages = React.useMemo(() => [
+    "Traduce cualquier texto al instante",
+    "Interpreter AI agent siempre listo",
+    "Escribe y te traduzco al momento",
+    "Traducción rápida con IA",
+    "Selecciona tu idioma y comienza",
+  ], []);
+
+  const [placeholderIndex, setPlaceholderIndex] = React.useState(0);
+  const [placeholderVisible, setPlaceholderVisible] = React.useState(true);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderVisible(false);
+      setTimeout(() => {
+        setPlaceholderIndex((prev) => (prev + 1) % messages.length);
+        setPlaceholderVisible(true);
+      }, 600);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [messages.length]);
+
   React.useEffect(() => {
     return () => {
       if (copyTimeoutRef.current) {
@@ -150,13 +172,21 @@ const TranslatedText = () => {
 
   return (
     <Container $rtl={isRTL}>
-      <div>
-        {translatedText.map((line, index) => (
-          <React.Fragment key={index}>
-            {line || <br />}
-          </React.Fragment>
-        ))}
-      </div>
+      {translatedText.length === 0 ? (
+        <Placeholder>
+          <div className={`line ${placeholderVisible ? "fade-in" : "fade-out"}`} key={placeholderIndex}>
+            {messages[placeholderIndex]}<span className="cursor" />
+          </div>
+        </Placeholder>
+      ) : (
+        <div>
+          {translatedText.map((line, index) => (
+            <React.Fragment key={index}>
+              {line || <br />}
+            </React.Fragment>
+          ))}
+        </div>
+      )}
       {translatedText.length !== 0 && (
         <Actions>
           <button onClick={copyHandler} aria-label="Copiar texto">
@@ -170,6 +200,53 @@ const TranslatedText = () => {
     </Container>
   );
 };
+
+const Placeholder = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 100px;
+  color: #9ca3af;
+  font-size: 16px;
+  font-weight: 400;
+  padding: 16px 24px;
+  text-align: center;
+  line-height: 1.6;
+
+  .fade-in {
+    animation: fadeIn 0.6s ease forwards;
+  }
+
+  .fade-out {
+    animation: fadeOut 0.5s ease forwards;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1.2em;
+    background: #9ca3af;
+    margin-left: 1px;
+    vertical-align: text-bottom;
+    animation: blink 0.8s step-end infinite;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+`;
 
 const Container = styled.div<{ $rtl: boolean }>`
   position: relative;
