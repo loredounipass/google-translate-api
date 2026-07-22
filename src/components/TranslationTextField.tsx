@@ -54,27 +54,31 @@ const TranslationTextField = () => {
     }
   });
   const keepMicOnRef = React.useRef<boolean>(keepMicOn);
-  const PLACEHOLDER_TEXT = "Start typing..";
+  const PLACEHOLDER_MESSAGES = React.useMemo(() => ["Start typing..", "or use voice mode"], []);
   const [placeholder, setPlaceholder] = React.useState("");
 
   React.useEffect(() => {
     if (text) return;
     let timer: number | null = null;
-    let index = 0;
-    const type = () => {
-      index++;
-      if (index > PLACEHOLDER_TEXT.length) {
+    let msgIndex = 0;
+    let charIndex = 0;
+
+    const typeNext = () => {
+      const currentMsg = PLACEHOLDER_MESSAGES[msgIndex];
+      charIndex++;
+      if (charIndex > currentMsg.length) {
         timer = window.setTimeout(() => {
           setPlaceholder("");
-          index = 0;
-          type();
-        }, 4000);
+          charIndex = 0;
+          msgIndex = (msgIndex + 1) % PLACEHOLDER_MESSAGES.length;
+          typeNext();
+        }, 3000);
         return;
       }
-      setPlaceholder(PLACEHOLDER_TEXT.slice(0, index));
-      timer = window.setTimeout(type, 80);
+      setPlaceholder(currentMsg.slice(0, charIndex));
+      timer = window.setTimeout(typeNext, 80);
     };
-    type();
+    typeNext();
     return () => { if (timer !== null) window.clearTimeout(timer); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text ? 'filled' : 'empty']);
@@ -598,7 +602,7 @@ const TranslationTextField = () => {
                   boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                 }} />
               </button>
-              <span className="text-[#333] text-xs">Keep microphone on</span>
+              <span className="text-[#333] text-xs">{keepMicOn ? "Turn off" : "Turn on"}</span>
             </div>
             <button
               onMouseDown={() => { if (!mediaStreamRef.current && keepMicOn) ensureAudioStreamActive(); }}
