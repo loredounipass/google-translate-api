@@ -76,7 +76,7 @@ const TranslationTextField = () => {
     };
     type();
     return () => { if (timer !== null) window.clearTimeout(timer); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text ? 'filled' : 'empty']);
 
   // VAD (Voice Activity Detection) settings - OPTIMIZED FOR VOICE IN MUSIC & NOISE REJECTION
@@ -118,11 +118,11 @@ const TranslationTextField = () => {
   const setTextParam = React.useCallback((value: string) => {
     const trimmedValue = value.trim() === "" ? "" : value;
     setText(trimmedValue);
-    
+
     const truncatedValue = trimmedValue.length > MAX_URL_TEXT_LENGTH
       ? trimmedValue.slice(0, MAX_URL_TEXT_LENGTH)
       : trimmedValue;
-    
+
     setURLSearchParams((params) => {
       if (truncatedValue === "") {
         params.delete("text");
@@ -216,7 +216,7 @@ const TranslationTextField = () => {
 
         activeFramesRef.current = 0;
         silentFramesRef.current = 0;
-        
+
         floatDataRef.current = null;
         byteDataRef.current = null;
         fftDataRef.current = null;
@@ -234,17 +234,16 @@ const TranslationTextField = () => {
 
       if (audioContextRef.current) {
         if (shouldClose) {
-          try { await audioContextRef.current.close(); } catch(e){}
+          try { await audioContextRef.current.close(); } catch (e) { }
           audioContextRef.current = null;
         }
       }
     } catch (err) {
       console.warn('Error during cleanupAudioProcessing', err);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const setupAudioProcessing = React.useCallback(async (deviceId: string | null) => {
     const oldAudioCtx = audioContextRef.current;
     const oldStream = mediaStreamRef.current;
@@ -283,7 +282,7 @@ const TranslationTextField = () => {
       mediaStreamRef.current = null;
 
       if (oldAudioCtx && shouldClose) {
-        try { await oldAudioCtx.close(); } catch(e) {}
+        try { await oldAudioCtx.close(); } catch (e) { }
       }
 
       const constraints: MediaStreamConstraints = {
@@ -313,6 +312,7 @@ const TranslationTextField = () => {
     } catch (err) {
       console.error('No se pudo inicializar audio:', err);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const ensureAudioStreamActive = React.useCallback(async () => {
@@ -354,7 +354,7 @@ const TranslationTextField = () => {
 
       const nyquist = analyser.context.sampleRate / 2;
       const binWidth = nyquist / fftData.length;
-      
+
       const lowBinStart = Math.floor(60 / binWidth);
       const lowBinEnd = Math.floor(250 / binWidth);
       let lowEnergy = 0;
@@ -426,7 +426,7 @@ const TranslationTextField = () => {
 
       const adaptiveThreshold = Math.max(baseVolumeThreshold, noiseFloorRef.current * adaptiveMultiplier + 0.003);
 
-      const isVoiceDetected = 
+      const isVoiceDetected =
         (smooth > adaptiveThreshold || rms > peakVoiceThreshold) &&
         (voiceSignature || formantRatio > formantRatioThreshold) &&
         isSpectralInVoiceRange &&
@@ -450,15 +450,15 @@ const TranslationTextField = () => {
         activeFramesRef.current = 0;
 
         if (silentFramesRef.current >= silenceHoldCount) {
-            if (!silenceTimerRef.current && listening) {
-              silenceTimerRef.current = window.setTimeout(() => {
-                if (listening && !keepMicOnRef.current) {
-                  SpeechRecognition.stopListening().catch(()=>{});
-                }
-                silenceTimerRef.current = null;
-              }, silenceTimeout);
-            }
+          if (!silenceTimerRef.current && listening) {
+            silenceTimerRef.current = window.setTimeout(() => {
+              if (listening && !keepMicOnRef.current) {
+                SpeechRecognition.stopListening().catch(() => { });
+              }
+              silenceTimerRef.current = null;
+            }, silenceTimeout);
           }
+        }
       }
     }, vadCheckInterval);
   }, [listening, vadCheckInterval, baseVolumeThreshold, adaptiveMultiplier, peakVoiceThreshold, formantRatioThreshold, spectralCentroidThreshold, spectralFlatnessThreshold, zeroCrossingThreshold, windNoiseThreshold, silenceTimeout, activeHoldCount, silenceHoldCount, rmsSmoothingAlpha]);
@@ -473,19 +473,19 @@ const TranslationTextField = () => {
     if (questionWords.test(firstWord)) return trimmed + '?';
     return trimmed + '.';
   };
-  
+
   React.useEffect(() => {
     if (!listening) return;
     if (manualEditRef.current) return;
 
     if (transcript && transcript !== previousTranscriptRef.current) {
       previousTranscriptRef.current = transcript;
-      
+
       const punctuated = addPunctuation(transcript);
       const truncated = punctuated.length > MAX_URL_TEXT_LENGTH
         ? punctuated.slice(-MAX_URL_TEXT_LENGTH)
         : punctuated;
-      
+
       requestAnimationFrame(() => {
         setTextParam(truncated);
       });
@@ -511,14 +511,14 @@ const TranslationTextField = () => {
       };
       restartWithNewLang().catch(console.error);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sl]);
 
   React.useEffect(() => {
     keepMicOnRef.current = keepMicOn;
     try {
       localStorage.setItem("keepMicOn", keepMicOn ? "true" : "false");
-    } catch (e) {}
+    } catch (e) { }
 
     if (keepMicOn) {
       if (browserSupportsSpeechRecognition && isMicrophoneAvailable) {
@@ -526,7 +526,7 @@ const TranslationTextField = () => {
       }
     } else {
       if (listening) {
-        SpeechRecognition.stopListening().catch(()=>{});
+        SpeechRecognition.stopListening().catch(() => { });
       }
       cleanupAudioProcessing();
     }
@@ -536,7 +536,7 @@ const TranslationTextField = () => {
     <div className="relative h-auto font-sans font-normal leading-normal max-h-screen flex-1">
       <div className="h-full relative">
         <div
-          className={`absolute top-0 left-0 right-0 p-4 pr-10 pb-6 text-lg text-[#9ca3af] font-sans pointer-events-none ${!text && placeholder ? 'block' : 'hidden'}`}
+          className={`absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center text-lg text-[#9ca3af] font-sans pointer-events-none ${!text && placeholder ? 'flex' : 'hidden'}`}
         >
           {placeholder}<span className="inline-block w-2 h-2 bg-[#9ca3af] rounded-full ml-1 align-baseline relative -top-0.5 animate-blink" />
         </div>
@@ -565,7 +565,7 @@ const TranslationTextField = () => {
         <span className="text-[11px] text-[#999]">
           {text.length.toLocaleString()} / {MAX_URL_TEXT_LENGTH.toLocaleString()}
         </span>
-        
+
         <button onClick={async () => {
           try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -600,7 +600,7 @@ const TranslationTextField = () => {
               </button>
               <span className="text-[#333] text-xs">Keep microphone on</span>
             </div>
-            <button 
+            <button
               onMouseDown={() => { if (!mediaStreamRef.current && keepMicOn) ensureAudioStreamActive(); }}
               onTouchStart={() => { if (!mediaStreamRef.current && keepMicOn) ensureAudioStreamActive(); }}
               onClick={handleSpeech}
