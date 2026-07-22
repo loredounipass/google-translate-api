@@ -9,6 +9,16 @@ import {
 import { SwitchIcon } from "../assets/SwitchIcon";
 
 const LanguagesBar = () => {
+  const translatedTextRef = React.useRef("");
+
+  React.useEffect(() => {
+    const handleTranslationChange = (e: any) => {
+      translatedTextRef.current = e.detail;
+    };
+    window.addEventListener("translatedTextChanged", handleTranslationChange);
+    return () => window.removeEventListener("translatedTextChanged", handleTranslationChange);
+  }, []);
+
   const [searchParams, setURLSearchParams] = useSearchParams();
   const [sourceLang, setSourceLang] = React.useState(
     validateLang(searchParams.get("sl"), DEFAULT_SOURCE_LANGUAGE)
@@ -34,12 +44,16 @@ const LanguagesBar = () => {
   const switchLangsHandler = () => {
     const newSource = targetLang;
     const newTarget = sourceLang;
+    const newText = translatedTextRef.current;
     
     setSourceLang(newSource);
     setTargetLang(newTarget);
     setURLSearchParams(params => {
       params.set("sl", newSource);
       params.set("tl", newTarget);
+      if (newText) {
+        params.set("text", newText);
+      }
       return params;
     });
   };

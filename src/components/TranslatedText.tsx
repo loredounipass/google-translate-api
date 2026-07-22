@@ -92,6 +92,14 @@ const TranslatedText = () => {
     };
   }, [text, tl, sl, modelId, debouncedTranslateHandler]);
 
+  React.useEffect(() => {
+    const event = new CustomEvent("translatedTextChanged", {
+      detail: translatedText.join("\n"),
+    });
+    window.dispatchEvent(event);
+  }, [translatedText]);
+
+
 
 
   const [copied, setCopied] = React.useState(false);
