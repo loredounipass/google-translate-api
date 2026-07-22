@@ -4,8 +4,9 @@ import TranslationTextField from "./components/TranslationTextField";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import TranslatedText from "components/TranslatedText";
 
+const modes = ["TEXT MODE", "VOICE MODE"];
+
 const ModeIndicator = () => {
-  const modes = ["TEXT MODE", "VOICE MODE"];
   const [currentModeIdx, setCurrentModeIdx] = useState(0);
   const [displayedText, setDisplayedText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -34,9 +35,12 @@ const ModeIndicator = () => {
         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-600"></span>
       </div>
-      <span className="text-[10px] font-semibold text-slate-500 tracking-widest font-mono">
+      <span className="text-[10px] font-semibold text-slate-500 tracking-widest font-mono flex items-center">
         {displayedText}
-        <span className="animate-pulse">_</span>
+        <span className="relative flex h-1.5 w-1.5 ml-0.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-600"></span>
+        </span>
       </span>
     </div>
   );

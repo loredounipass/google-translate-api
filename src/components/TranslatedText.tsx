@@ -100,21 +100,34 @@ const TranslatedText = () => {
   const copyTimeoutRef = React.useRef<number | null>(null);
 
   const messages = React.useMemo(() => [
-    "Traduce cualquier texto al instante",
-    "Interpreter AI agent siempre listo",
-    "Escribe y te traduzco al momento",
-    "Traducción rápida con IA",
-    "Selecciona tu idioma y comienza",
+    "Translate any text instantly",
+    "Interpreter AI agent always ready",
+    "Type and I'll translate instantly",
+    "Fast AI translation",
+    "Select your language and start",
   ], []);
 
   const [placeholderIndex, setPlaceholderIndex] = React.useState(0);
+  const [displayedText, setDisplayedText] = React.useState("");
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   React.useEffect(() => {
-    const interval = setInterval(() => {
-      setPlaceholderIndex((prev) => (prev + 1) % messages.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [messages.length]);
+    const typingSpeed = isDeleting ? 30 : 60;
+    const currentMessage = messages[placeholderIndex];
+
+    const timer = setTimeout(() => {
+      if (!isDeleting && displayedText === currentMessage) {
+        setTimeout(() => setIsDeleting(true), 2500);
+      } else if (isDeleting && displayedText === "") {
+        setIsDeleting(false);
+        setPlaceholderIndex((prev) => (prev + 1) % messages.length);
+      } else {
+        setDisplayedText(currentMessage.substring(0, displayedText.length + (isDeleting ? -1 : 1)));
+      }
+    }, typingSpeed);
+
+    return () => clearTimeout(timer);
+  }, [displayedText, isDeleting, placeholderIndex, messages]);
 
   React.useEffect(() => {
     return () => {
@@ -128,8 +141,12 @@ const TranslatedText = () => {
     <div className={`relative bg-[#f3f4f6] text-[#0f1720] font-sans font-normal leading-normal ${isRTL ? 'text-right' : 'text-left'} text-lg break-words min-h-[100px] border border-[#e6e9ee] flex-1`}>
       {translatedText.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full min-h-[100px] text-[#9ca3af] text-base font-normal p-4 px-6 text-center leading-relaxed">
-          <div key={placeholderIndex}>
-            {messages[placeholderIndex]}<span className="inline-block w-2 h-2 bg-[#9ca3af] rounded-full ml-1 align-baseline relative -top-0.5 animate-blink" />
+          <div className="flex items-center justify-center">
+            {displayedText}
+            <span className="relative flex h-2 w-2 ml-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#9ca3af] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#9ca3af]"></span>
+            </span>
           </div>
         </div>
       ) : (

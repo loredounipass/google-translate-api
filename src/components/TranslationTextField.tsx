@@ -54,7 +54,7 @@ const TranslationTextField = () => {
     }
   });
   const keepMicOnRef = React.useRef<boolean>(keepMicOn);
-  const PLACEHOLDER_MESSAGES = React.useMemo(() => ["Start typing..", "or use voice mode"], []);
+  const PLACEHOLDER_MESSAGES = React.useMemo(() => ["Start typing..", "Or use voice mode"], []);
   const [placeholder, setPlaceholder] = React.useState("");
 
   React.useEffect(() => {
