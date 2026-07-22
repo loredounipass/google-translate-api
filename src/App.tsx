@@ -61,7 +61,7 @@ const Header = () => {
     <>
       <div className="absolute top-6 left-8 flex items-center gap-3 z-50 select-none cursor-default">
         <div className="font-semibold text-xl text-slate-800 tracking-tight">
-          interpeter AI agent
+          interpeter0 AI agent
         </div>
         <ModeIndicator />
       </div>
