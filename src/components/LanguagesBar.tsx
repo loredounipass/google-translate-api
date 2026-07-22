@@ -37,8 +37,11 @@ const LanguagesBar = () => {
     
     setSourceLang(newSource);
     setTargetLang(newTarget);
-    setLangParam("sl", newSource);
-    setLangParam("tl", newTarget);
+    setURLSearchParams(params => {
+      params.set("sl", newSource);
+      params.set("tl", newTarget);
+      return params;
+    });
   };
 
   const handleChangeSourceLang = (value: string) => {

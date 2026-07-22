@@ -143,11 +143,12 @@ const TranslationTextField = () => {
   const clearTextHandler = async () => {
     setTextParam("");
     resetTranscript();
+    previousTranscriptRef.current = "";
     if (listening) {
       await SpeechRecognition.stopListening();
       SpeechRecognition.abortListening();
     }
-    if (!keepMicOnRef.current) await cleanupAudioProcessing();
+    await cleanupAudioProcessing();
   };
 
   const handleChangeText = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -496,6 +497,22 @@ const TranslationTextField = () => {
       textareaRef.current.focus();
     }
   }, [listening]);
+
+  // Restart speech recognition when source language changes while listening
+  React.useEffect(() => {
+    if (listening) {
+      const restartWithNewLang = async () => {
+        await SpeechRecognition.stopListening();
+        await SpeechRecognition.startListening({
+          continuous: true,
+          interimResults: true,
+          language: sl
+        });
+      };
+      restartWithNewLang().catch(console.error);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sl]);
 
   React.useEffect(() => {
     keepMicOnRef.current = keepMicOn;

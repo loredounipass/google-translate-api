@@ -7,7 +7,7 @@ import { DEFAULT_SOURCE_LANGUAGE, DEFAULT_TARGET_LANGUAGE } from "utils/constant
 import { debounce } from "lodash";
 
 const TranslatedText = () => {
-  const [searchParams, setURLSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const text = searchParams.get("text") || "";
   const tl = searchParams.get("tl") || DEFAULT_TARGET_LANGUAGE;
   const sl = searchParams.get("sl") || DEFAULT_SOURCE_LANGUAGE;
@@ -15,9 +15,6 @@ const TranslatedText = () => {
   const [translatedText, setTranslatedText] = React.useState<string[]>([]);
   const abortControllerRef = React.useRef<AbortController | null>(null);
   const currentTextRef = React.useRef(text);
-  const prevSlRef = React.useRef<string | null>(null);
-  const prevTlRef = React.useRef<string | null>(null);
-  const hasTranslatedRef = React.useRef(false);
 
   const translateHandler = React.useCallback(async (value: string, targetLang: string, sourceLang: string) => {
     if (!value || value !== currentTextRef.current) {
@@ -36,7 +33,6 @@ const TranslatedText = () => {
       });
       
       if (translated) {
-        hasTranslatedRef.current = true;
         const normalizedText = translated
           .split("\n")
           .map(line => line.trim())
@@ -76,25 +72,6 @@ const TranslatedText = () => {
   );
 
   React.useEffect(() => {
-    if (
-      prevSlRef.current !== null &&
-      prevTlRef.current !== null &&
-      sl === prevTlRef.current &&
-      tl === prevSlRef.current &&
-      hasTranslatedRef.current
-    ) {
-      const newText = translatedTextRef.current.join("\n");
-      if (text !== newText) {
-        setURLSearchParams((params) => {
-          params.set("text", newText);
-          return params;
-        });
-        prevSlRef.current = sl;
-        prevTlRef.current = tl;
-        return;
-      }
-    }
-
     currentTextRef.current = text;
 
     if (!text) {
@@ -106,6 +83,7 @@ const TranslatedText = () => {
       return;
     }
 
+    // Always re-translate when text, target lang, or source lang change
     debouncedTranslateHandler(text, tl, sl);
 
     return () => {
@@ -114,15 +92,9 @@ const TranslatedText = () => {
         abortControllerRef.current.abort();
       }
     };
-  }, [text, tl, sl, debouncedTranslateHandler, setURLSearchParams]);
+  }, [text, tl, sl, debouncedTranslateHandler]);
 
-  React.useEffect(() => {
-    prevSlRef.current = sl;
-    prevTlRef.current = tl;
-  }, [sl, tl]);
 
-  const translatedTextRef = React.useRef(translatedText);
-  translatedTextRef.current = translatedText;
 
   const [copied, setCopied] = React.useState(false);
   const copyTimeoutRef = React.useRef<number | null>(null);
