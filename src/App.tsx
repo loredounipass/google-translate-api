@@ -1,11 +1,56 @@
+import { useState, useEffect } from "react";
 import LanguagesBar from "./components/LanguagesBar";
 import TranslationTextField from "./components/TranslationTextField";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import TranslatedText from "components/TranslatedText";
 
+const ModeIndicator = () => {
+  const modes = ["TEXT MODE", "VOICE MODE"];
+  const [currentModeIdx, setCurrentModeIdx] = useState(0);
+  const [displayedText, setDisplayedText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const typingSpeed = isDeleting ? 40 : 100;
+    const currentMode = modes[currentModeIdx];
+
+    const timer = setTimeout(() => {
+      if (!isDeleting && displayedText === currentMode) {
+        setTimeout(() => setIsDeleting(true), 2500);
+      } else if (isDeleting && displayedText === "") {
+        setIsDeleting(false);
+        setCurrentModeIdx((prev) => (prev + 1) % modes.length);
+      } else {
+        setDisplayedText(currentMode.substring(0, displayedText.length + (isDeleting ? -1 : 1)));
+      }
+    }, typingSpeed);
+
+    return () => clearTimeout(timer);
+  }, [displayedText, isDeleting, currentModeIdx]);
+
+  return (
+    <div className="flex items-center gap-2 bg-slate-50/80 backdrop-blur-sm px-2.5 py-1 rounded border border-slate-200 shadow-sm w-28 h-6">
+      <div className="relative flex h-1.5 w-1.5 flex-shrink-0">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-600"></span>
+      </div>
+      <span className="text-[10px] font-semibold text-slate-500 tracking-widest font-mono">
+        {displayedText}
+        <span className="animate-pulse">_</span>
+      </span>
+    </div>
+  );
+};
+
 function App() {
   return (
     <Router>
+      <div className="absolute top-6 left-8 flex items-center gap-3 z-50 select-none cursor-default">
+        <div className="font-semibold text-xl text-slate-800 tracking-tight">
+          interpeter AI agent
+        </div>
+        <ModeIndicator />
+      </div>
       <Routes>
         <Route
           path="/"
