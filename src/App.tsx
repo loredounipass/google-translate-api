@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import LanguagesBar from "./components/LanguagesBar";
 import TranslationTextField from "./components/TranslationTextField";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, useSearchParams } from "react-router-dom";
 import TranslatedText from "components/TranslatedText";
+import { AI_MODELS, DEFAULT_MODEL } from "utils/constants";
 
 const modes = ["TEXT MODE", "VOICE MODE"];
 
@@ -46,15 +47,46 @@ const ModeIndicator = () => {
   );
 };
 
-function App() {
+const Header = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentModel = searchParams.get("model") || DEFAULT_MODEL;
+
+  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("model", e.target.value);
+    setSearchParams(newParams);
+  };
+
   return (
-    <Router>
+    <>
       <div className="absolute top-6 left-8 flex items-center gap-3 z-50 select-none cursor-default">
         <div className="font-semibold text-xl text-slate-800 tracking-tight">
           interpeter AI agent
         </div>
         <ModeIndicator />
       </div>
+      <div className="absolute top-6 right-8 flex items-center gap-2 z-50">
+        <span className="text-xs text-slate-500 font-medium tracking-wide">Neural Network Model</span>
+        <select 
+          value={currentModel} 
+          onChange={handleModelChange}
+          className="bg-white border border-slate-200 text-slate-700 text-xs rounded px-2 py-1 outline-none focus:border-blue-400 shadow-sm font-sans"
+        >
+          {Object.entries(AI_MODELS).map(([key, model]) => (
+            <option key={key} value={key}>
+              {model.name}
+            </option>
+          ))}
+        </select>
+      </div>
+    </>
+  );
+};
+
+function App() {
+  return (
+    <Router>
+      <Header />
       <Routes>
         <Route
           path="/"

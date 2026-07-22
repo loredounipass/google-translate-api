@@ -2,7 +2,6 @@ import axios from "axios";
 import { LRUCache } from "lru-cache";
 
 const NVIDIA_API_URL = "/api/nvidia/chat/completions";
-const MODEL = "mistralai/mistral-small-4-119b-2603";
 
 const MAX_RETRIES = 3;
 const BASE_DELAY = 1000;
@@ -13,8 +12,8 @@ const translationCache = new LRUCache<string, string>({ max: 1000, ttl: CACHE_TT
 const MIN_REQUEST_INTERVAL = 600;
 let lastRequestTime = 0;
 
-const getCacheKey = (text: string, targetLang: string, sourceLang: string): string =>
-  `${sourceLang}:${targetLang}:${text}`;
+const getCacheKey = (text: string, targetLang: string, sourceLang: string, modelId: string): string =>
+  `${modelId}:${sourceLang}:${targetLang}:${text}`;
 
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -103,12 +102,13 @@ export const translate = async (
   targetLang: string,
   sourceLang: string,
   text: string,
+  modelId: string,
   options?: { signal?: AbortSignal }
 ): Promise<string> => {
   const cleanedText = normalizeText(text);
   if (!cleanedText) throw new Error("El texto a traducir no puede estar vacío.");
 
-  const cacheKey = getCacheKey(cleanedText, targetLang, sourceLang);
+  const cacheKey = getCacheKey(cleanedText, targetLang, sourceLang, modelId);
   const cached = translationCache.get(cacheKey);
   if (cached) return cached;
 
@@ -137,7 +137,7 @@ export const translate = async (
       const response = await axios.post(
         NVIDIA_API_URL,
         {
-          model: MODEL,
+          model: modelId,
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
@@ -183,7 +183,8 @@ export const translate = async (
 export const translateMultiple = async (
   texts: string[],
   targetLang: string,
-  sourceLang: string
+  sourceLang: string,
+  modelId: string
 ): Promise<string[]> => {
-  return Promise.all(texts.map((text) => translate(targetLang, sourceLang, text)));
+  return Promise.all(texts.map((text) => translate(targetLang, sourceLang, text, modelId)));
 };

@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { translate } from "api/ai-translation";
 import CopyIcon from "assets/CopyIcon";
-import { DEFAULT_SOURCE_LANGUAGE, DEFAULT_TARGET_LANGUAGE } from "utils/constants";
+import { DEFAULT_SOURCE_LANGUAGE, DEFAULT_TARGET_LANGUAGE, DEFAULT_MODEL, AI_MODELS } from "utils/constants";
 import { debounce } from "lodash";
 
 const TranslatedText = () => {
@@ -11,12 +11,14 @@ const TranslatedText = () => {
   const text = searchParams.get("text") || "";
   const tl = searchParams.get("tl") || DEFAULT_TARGET_LANGUAGE;
   const sl = searchParams.get("sl") || DEFAULT_SOURCE_LANGUAGE;
+  const modelKey = searchParams.get("model") || DEFAULT_MODEL;
+  const modelId = AI_MODELS[modelKey as keyof typeof AI_MODELS]?.id || AI_MODELS[DEFAULT_MODEL as keyof typeof AI_MODELS].id;
   const isRTL = ["ar", "fa", "ur"].includes(tl);
   const [translatedText, setTranslatedText] = React.useState<string[]>([]);
   const abortControllerRef = React.useRef<AbortController | null>(null);
   const currentTextRef = React.useRef(text);
 
-  const translateHandler = React.useCallback(async (value: string, targetLang: string, sourceLang: string) => {
+  const translateHandler = React.useCallback(async (value: string, targetLang: string, sourceLang: string, mId: string) => {
     if (!value || value !== currentTextRef.current) {
       setTranslatedText([]);
       return;
@@ -28,7 +30,7 @@ const TranslatedText = () => {
       }
       abortControllerRef.current = new AbortController();
   
-      const translated = await translate(targetLang, sourceLang, value, {
+      const translated = await translate(targetLang, sourceLang, value, mId, {
         signal: abortControllerRef.current.signal
       });
       
@@ -65,8 +67,8 @@ const TranslatedText = () => {
 
   const debouncedTranslateHandler = React.useMemo(
     () =>
-      debounce((text: string, targetLang: string, sourceLang: string) => {
-        translateHandler(text, targetLang, sourceLang);
+      debounce((text: string, targetLang: string, sourceLang: string, mId: string) => {
+        translateHandler(text, targetLang, sourceLang, mId);
       }, 300),
     [translateHandler]
   );
@@ -83,8 +85,8 @@ const TranslatedText = () => {
       return;
     }
 
-    // Always re-translate when text, target lang, or source lang change
-    debouncedTranslateHandler(text, tl, sl);
+    // Always re-translate when text, target lang, source lang, or model change
+    debouncedTranslateHandler(text, tl, sl, modelId);
 
     return () => {
       debouncedTranslateHandler.cancel();
@@ -92,7 +94,7 @@ const TranslatedText = () => {
         abortControllerRef.current.abort();
       }
     };
-  }, [text, tl, sl, debouncedTranslateHandler]);
+  }, [text, tl, sl, modelId, debouncedTranslateHandler]);
 
 
 
