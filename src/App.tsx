@@ -61,12 +61,34 @@ const Header = () => {
     <>
       <div className="absolute top-6 left-8 flex items-center gap-3 z-50 select-none cursor-default">
         <div className="font-semibold text-xl text-slate-800 tracking-tight">
-          interpeter0 AI agent
+          interpeter AI agent
         </div>
         <ModeIndicator />
       </div>
       <div className="absolute top-6 right-8 flex items-center gap-2 z-50">
-        <span className="text-xs text-slate-500 font-medium tracking-wide">Neural Network Model</span>
+        <div className="relative flex items-center gap-1.5 group">
+          <span className="text-xs text-slate-500 font-medium tracking-wide">neural network model</span>
+          <div className="text-slate-400 hover:text-slate-600 cursor-help transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </div>
+          
+          <div className="absolute right-0 top-full mt-2 w-72 p-3 bg-slate-800 text-slate-300 text-xs rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50">
+            <div className="font-semibold mb-1 text-slate-50 flex items-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              Attention
+            </div>
+            These open-source neural network models vary in inference speed and translation accuracy. <strong className="text-slate-100 font-medium">Mistral</strong> and <strong className="text-slate-100 font-medium">Llama</strong> offer the fastest response times, while Mistral typically delivers the highest quality results for this application.
+            <div className="absolute top-0 right-[7.5rem] -mt-1.5 w-3 h-3 bg-slate-800 transform rotate-45"></div>
+          </div>
+        </div>
         <select 
           value={currentModel} 
           onChange={handleModelChange}
