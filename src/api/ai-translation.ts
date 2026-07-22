@@ -9,9 +9,6 @@ const BASE_DELAY = 1000;
 const CACHE_TTL = 5 * 60 * 1000;
 const translationCache = new LRUCache<string, string>({ max: 1000, ttl: CACHE_TTL });
 
-const MIN_REQUEST_INTERVAL = 600;
-let lastRequestTime = 0;
-
 const getCacheKey = (text: string, targetLang: string, sourceLang: string, modelId: string): string =>
   `${modelId}:${sourceLang}:${targetLang}:${text}`;
 
@@ -115,13 +112,6 @@ export const translate = async (
   const systemPrompt = buildSystemPrompt(targetLang, sourceLang);
   const userPrompt = `Translate the following text to ${getLanguageName(targetLang)}. Output ONLY the translation, nothing else:\n\n${cleanedText}`;
 
-  const now = Date.now();
-  const timeSinceLastRequest = now - lastRequestTime;
-  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
-    await wait(MIN_REQUEST_INTERVAL - timeSinceLastRequest);
-    if (options?.signal?.aborted) throw new DOMException("Aborted", "AbortError");
-  }
-
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -133,7 +123,6 @@ export const translate = async (
     }
 
     try {
-      lastRequestTime = Date.now();
       const response = await axios.post(
         NVIDIA_API_URL,
         {
