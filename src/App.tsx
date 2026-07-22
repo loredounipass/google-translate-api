@@ -58,14 +58,14 @@ const Header = () => {
       <div className="fixed top-0 left-0 w-full p-4 md:top-6 md:left-8 md:w-auto md:p-0 flex flex-col sm:flex-row items-center justify-between gap-3 z-50 select-none cursor-default bg-white/90 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-b border-slate-200 md:border-none shadow-sm md:shadow-none transition-all">
         <div className="flex items-center gap-3">
           <div className="font-semibold text-lg md:text-xl text-slate-800 tracking-tight">
-            interpeter AI agent
+            interpeter-0 AI agent
           </div>
           <ModeIndicator />
         </div>
         
         <div className="flex items-center gap-2 md:fixed md:top-6 md:right-8">
           <div className="relative flex items-center gap-1.5 group">
-          <span className="text-xs text-slate-500 font-medium tracking-wide">neural network model</span>
+          <span className="text-xs text-slate-500 font-medium tracking-wide">Neural Network Model</span>
           <div className="text-slate-400 hover:text-slate-600 cursor-help transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
