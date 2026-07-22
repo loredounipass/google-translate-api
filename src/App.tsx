@@ -31,11 +31,7 @@ const ModeIndicator = () => {
   }, [displayedText, isDeleting, currentModeIdx]);
 
   return (
-    <div className="flex items-center gap-2 bg-slate-50/80 backdrop-blur-sm px-2.5 py-1 rounded border border-slate-200 shadow-sm w-28 h-6">
-      <div className="relative flex h-1.5 w-1.5 flex-shrink-0">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-600"></span>
-      </div>
+    <div className="flex items-center justify-center bg-slate-50/80 backdrop-blur-sm px-2.5 py-1 rounded border border-slate-200 shadow-sm w-28 h-6">
       <span className="text-[10px] font-semibold text-slate-500 tracking-widest font-mono flex items-center">
         {displayedText}
         <span className="relative flex h-1.5 w-1.5 ml-0.5">
