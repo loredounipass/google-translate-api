@@ -140,7 +140,7 @@ const TranslatedText = () => {
   }, []);
 
   return (
-    <div className={`relative bg-[#f3f4f6] text-[#0f1720] font-sans font-normal leading-normal ${isRTL ? 'text-right' : 'text-left'} text-lg break-words min-h-[100px] border border-[#e6e9ee] flex-1`}>
+    <div className={`relative bg-[#f3f4f6] text-[#0f1720] font-sans font-normal leading-normal ${isRTL ? 'text-right' : 'text-left'} text-lg break-words min-h-[100px] border-t md:border-t-0 md:border-l border-[#e6e9ee] flex-1 flex flex-col`}>
       {translatedText.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full min-h-[100px] text-[#9ca3af] text-base font-normal p-4 px-6 text-center leading-relaxed">
           <div className="flex items-center justify-center">

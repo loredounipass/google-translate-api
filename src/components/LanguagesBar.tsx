@@ -74,20 +74,20 @@ const LanguagesBar = () => {
   }, [searchParams, setLangParam]);
 
   return (
-    <div className="bg-primary-main flex items-center px-4 gap-3 border-b border-primary-700 max-sm:px-2 max-sm:gap-1.5">
+    <div className="bg-white/80 backdrop-blur-sm flex items-center justify-between p-2 md:p-3 px-3 md:px-6 gap-2 md:gap-4 border-b border-slate-200 w-full overflow-hidden">
       <Select<string>
         value={sourceLang}
         onChange={handleChangeSourceLang}
         options={languageOptions as unknown as { value: string; label: string }[]}
         aria-label="Seleccionar idioma origen"
         popupMatchSelectWidth={false}
-        className="lang-select min-w-[140px] flex-1 max-sm:min-w-[120px]"
+        className="lang-select w-full min-w-0 flex-1 md:min-w-[140px]"
       />
       
       <button
         onClick={switchLangsHandler}
         aria-label="Intercambiar idiomas"
-        className="bg-none border-none cursor-pointer p-2 rounded transition-all duration-200 hover:bg-primary-500 hover:rotate-180 hover:scale-110 active:rotate-180 active:scale-95 max-sm:p-1 [&_svg]:block [&_svg]:w-6 [&_svg]:h-6 [&_svg]:fill-primary-contrast max-sm:[&_svg]:w-5 max-sm:[&_svg]:h-5"
+        className="bg-slate-50 border border-slate-200 cursor-pointer p-1.5 md:p-2 rounded-full transition-all duration-200 hover:bg-slate-100 hover:rotate-180 hover:scale-110 active:rotate-180 active:scale-95 text-slate-500 shadow-sm flex-shrink-0"
       >
         <SwitchIcon />
       </button>
@@ -98,7 +98,7 @@ const LanguagesBar = () => {
         options={languageOptions as unknown as { value: string; label: string }[]}
         aria-label="Seleccionar idioma destino"
         popupMatchSelectWidth={false}
-        className="lang-select min-w-[140px] flex-1 max-sm:min-w-[120px]"
+        className="lang-select w-full min-w-0 flex-1 md:min-w-[140px]"
       />
     </div>
   );

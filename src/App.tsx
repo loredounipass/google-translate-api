@@ -55,15 +55,17 @@ const Header = () => {
 
   return (
     <>
-      <div className="absolute top-6 left-8 flex items-center gap-3 z-50 select-none cursor-default">
-        <div className="font-semibold text-xl text-slate-800 tracking-tight">
-          interpeter-0 AI agent
+      <div className="fixed top-0 left-0 w-full p-4 md:top-6 md:left-8 md:w-auto md:p-0 flex flex-col sm:flex-row items-center justify-between gap-3 z-50 select-none cursor-default bg-white/90 md:bg-transparent backdrop-blur-md md:backdrop-blur-none border-b border-slate-200 md:border-none shadow-sm md:shadow-none transition-all">
+        <div className="flex items-center gap-3">
+          <div className="font-semibold text-lg md:text-xl text-slate-800 tracking-tight">
+            interpeter AI agent
+          </div>
+          <ModeIndicator />
         </div>
-        <ModeIndicator />
-      </div>
-      <div className="absolute top-6 right-8 flex items-center gap-2 z-50">
-        <div className="relative flex items-center gap-1.5 group">
-          <span className="text-xs text-slate-500 font-medium tracking-wide">Neural Network Model</span>
+        
+        <div className="flex items-center gap-2 md:fixed md:top-6 md:right-8">
+          <div className="relative flex items-center gap-1.5 group">
+          <span className="text-xs text-slate-500 font-medium tracking-wide">neural network model</span>
           <div className="text-slate-400 hover:text-slate-600 cursor-help transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
@@ -88,7 +90,7 @@ const Header = () => {
         <select 
           value={currentModel} 
           onChange={handleModelChange}
-          className="bg-white border border-slate-200 text-slate-700 text-xs rounded px-2 py-1 outline-none focus:border-blue-400 shadow-sm font-sans"
+          className="bg-white border border-slate-200 text-slate-700 text-xs rounded px-2 py-1 outline-none focus:border-blue-400 shadow-sm font-sans max-w-[120px] sm:max-w-none truncate"
         >
           {Object.entries(AI_MODELS).map(([key, model]) => (
             <option key={key} value={key}>
@@ -96,6 +98,7 @@ const Header = () => {
             </option>
           ))}
         </select>
+      </div>
       </div>
     </>
   );
@@ -109,9 +112,9 @@ function App() {
         <Route
           path="/"
           Component={() => (
-            <div className="text-center text-[#111111] h-[80vh] w-[97vw] bg-white rounded-2xl mx-auto mt-[10vh] overflow-hidden flex flex-col font-sans">
+            <div className="text-center text-[#111111] h-[calc(100vh-7rem)] md:h-[80vh] w-[95vw] md:w-[97vw] bg-white rounded-2xl mx-auto mt-24 md:mt-[10vh] overflow-hidden flex flex-col font-sans shadow-lg">
               <LanguagesBar />
-              <div className="flex-1 flex">
+              <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
                 <TranslationTextField />
                 <TranslatedText />
               </div>
