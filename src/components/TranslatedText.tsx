@@ -35,10 +35,7 @@ const TranslatedText = () => {
       });
       
       if (translated) {
-        const normalizedText = translated
-          .split("\n")
-          .map(line => line.trim());
-        setTranslatedText(normalizedText.length ? normalizedText : [translated.trim()]);
+        setTranslatedText([translated]);
       }
     } catch (error) {
       if (axios.isCancel(error)) return;
