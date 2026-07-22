@@ -52,6 +52,43 @@ const GLOSSARY: Record<string, Record<string, Record<string, string>>> = {
       "llanta": "tire",
       "troca": "truck",
       "camión": "truck"
+    },
+    "medical_vns": {
+      "chequeo general": "general checkup",
+      "medicina para el dolor": "pain medication",
+      "mamografía": "mammogram",
+      "rayos x": "X-ray",
+      "cáncer": "cancer",
+      "receta médica": "prescription",
+      "autorización previa": "prior authorization",
+      "copago": "copay",
+      "proveedor de atención médica": "healthcare provider",
+      "seguro médico": "health insurance",
+      "cobertura": "coverage",
+      "VNS Health": "VNS Health",
+      "Medicaid": "Medicaid",
+      "Medicare": "Medicare",
+      "sala de emergencias": "emergency room (ER)",
+      "cuidados paliativos": "hospice care"
+    },
+    "legal_us": {
+      "juez": "judge",
+      "abogado": "attorney",
+      "fiscal": "prosecutor",
+      "testigo": "witness",
+      "jurado": "jury",
+      "veredicto": "verdict",
+      "demanda": "lawsuit",
+      "demandante": "plaintiff",
+      "demandado": "defendant",
+      "acusado": "defendant",
+      "audiencia": "hearing",
+      "fianza": "bail",
+      "libertad condicional": "probation",
+      "orden de cateo": "search warrant",
+      "orden de arresto": "arrest warrant",
+      "declaración de culpabilidad": "guilty plea",
+      "apelar": "to appeal"
     }
   }
 };
@@ -61,17 +98,30 @@ const buildSystemPrompt = (targetLang: string, sourceLang: string): string => {
 
   let styleRules = "";
   if (sourceLang === "es" && targetLang === "en") {
-    // Generar reglas desde el glosario automáticamente
-    const terms = Object.entries(GLOSSARY["es-en"].automotive)
-      .map(([es, en]) => `  - "${es}" → "${en}"`)
+    // Generar reglas desde el glosario automáticamente para todos los dominios
+    const automotiveTerms = Object.entries(GLOSSARY["es-en"].automotive)
+      .map(([es, en]) => `    - "${es}" → "${en}"`)
+      .join("\n");
+      
+    const medicalTerms = Object.entries(GLOSSARY["es-en"].medical_vns)
+      .map(([es, en]) => `    - "${es}" → "${en}"`)
+      .join("\n");
+      
+    const legalTerms = Object.entries(GLOSSARY["es-en"].legal_us)
+      .map(([es, en]) => `    - "${es}" → "${en}"`)
       .join("\n");
       
     styleRules = `
 STYLE RULES (es→en) - MANDATORY:
 - Use professional American English (US dialect, not British).
 - Maintain formal/professional tone appropriate for business contexts.
-- Domain-specific terms MUST use natural American English equivalents:
-${terms}
+- Domain-specific terms MUST use natural American English equivalents. Based on context, apply these:
+  [AUTOMOTIVE]:
+${automotiveTerms}
+  [MEDICAL / VNS HEALTH / MEDICARE]:
+${medicalTerms}
+  [US LEGAL / COURT]:
+${legalTerms}
 - Analyze context to determine the domain, then choose the most natural American English equivalent.`;
   } else if (sourceLang === "en" && targetLang === "es") {
     styleRules = `
