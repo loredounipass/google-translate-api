@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.lang-select .ant-select-selector {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #000000 !important;
+  font-size: 16px !important;
+  padding: 16px 0 !important;
+  height: auto !important;
+}
+
+.lang-select .ant-select-selection-item {
+  color: inherit !important;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.lang-select .ant-select-arrow {
+  color: #000000 !important;
+}
+
+@media (max-width: 480px) {
+  .lang-select {
+    min-width: 120px;
+  }
+  .lang-select .ant-select-selector {
+    font-size: 14px !important;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 12px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 20px;
+  background-color: #e0e0e0;
+}
+
+.blue-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.blue-scrollbar::-webkit-scrollbar-thumb {
+  background: #bdbdbd;
+  border-radius: 4px;
+}

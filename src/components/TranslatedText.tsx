@@ -1,34 +1,10 @@
 import React from "react";
 import { useSearchParams } from "react-router-dom";
-import styled, { createGlobalStyle } from "styled-components";
 import axios from "axios";
 import { translate } from "api/ai-translation";
 import CopyIcon from "assets/CopyIcon";
 import { DEFAULT_SOURCE_LANGUAGE, DEFAULT_TARGET_LANGUAGE } from "utils/constants";
 import { debounce } from "lodash";
-
-const GlobalStyle = createGlobalStyle`
-  @keyframes blink {
-    50% { opacity: 0; }
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateX(-50%) translateY(4px); }
-    to { opacity: 1; transform: translateX(-50%) translateY(0); }
-  }
-`;
-
-const Cursor = styled.span`
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background: #9ca3af;
-  border-radius: 50%;
-  margin-left: 4px;
-  vertical-align: baseline;
-  position: relative;
-  top: -2px;
-  animation: blink 0.8s step-end infinite;
-`;
 
 const TranslatedText = () => {
   const [searchParams, setURLSearchParams] = useSearchParams();
@@ -37,7 +13,7 @@ const TranslatedText = () => {
   const sl = searchParams.get("sl") || DEFAULT_SOURCE_LANGUAGE;
   const isRTL = ["ar", "fa", "ur"].includes(tl);
   const [translatedText, setTranslatedText] = React.useState<string[]>([]);
-  const abortControllerRef = React.useRef<AbortController>();
+  const abortControllerRef = React.useRef<AbortController | null>(null);
   const currentTextRef = React.useRef(text);
   const prevSlRef = React.useRef<string | null>(null);
   const prevTlRef = React.useRef<string | null>(null);
@@ -55,7 +31,6 @@ const TranslatedText = () => {
       }
       abortControllerRef.current = new AbortController();
   
-      // Modificar la llamada a translate para incluir el signal
       const translated = await translate(targetLang, sourceLang, value, {
         signal: abortControllerRef.current.signal
       });
@@ -92,7 +67,6 @@ const TranslatedText = () => {
     }
   };
 
-  // Se crea la función debounced solo una vez
   const debouncedTranslateHandler = React.useMemo(
     () =>
       debounce((text: string, targetLang: string, sourceLang: string) => {
@@ -101,13 +75,7 @@ const TranslatedText = () => {
     [translateHandler]
   );
 
-  // Actualizar la traducción cuando cambie el texto o los idiomas.
-  // Usamos un único useEffect para evitar llamadas duplicadas y
-  // asegurarnos de cancelar traducciones pendientes al borrar el texto.
   React.useEffect(() => {
-    // Detect language swap (sl/tl swapped) and, if we have a translated
-    // value, replace the `text` param with the translated content so
-    // the UI effectively reverses the translation.
     if (
       prevSlRef.current !== null &&
       prevTlRef.current !== null &&
@@ -115,14 +83,12 @@ const TranslatedText = () => {
       tl === prevSlRef.current &&
       hasTranslatedRef.current
     ) {
-      const newText = translatedText.join("\n");
+      const newText = translatedTextRef.current.join("\n");
       if (text !== newText) {
         setURLSearchParams((params) => {
           params.set("text", newText);
           return params;
         });
-        // Do not continue with current effect — the URL change will
-        // trigger this effect again with the updated `text`.
         prevSlRef.current = sl;
         prevTlRef.current = tl;
         return;
@@ -148,15 +114,16 @@ const TranslatedText = () => {
         abortControllerRef.current.abort();
       }
     };
-  }, [text, tl, sl, translatedText, debouncedTranslateHandler, setURLSearchParams]);
+  }, [text, tl, sl, debouncedTranslateHandler, setURLSearchParams]);
 
-  // Keep previous language refs in sync for swap detection
   React.useEffect(() => {
     prevSlRef.current = sl;
     prevTlRef.current = tl;
   }, [sl, tl]);
 
-  // Toast state and timeout ref for copy feedback
+  const translatedTextRef = React.useRef(translatedText);
+  translatedTextRef.current = translatedText;
+
   const [copied, setCopied] = React.useState(false);
   const copyTimeoutRef = React.useRef<number | null>(null);
 
@@ -186,16 +153,15 @@ const TranslatedText = () => {
   }, []);
 
   return (
-    <Container $rtl={isRTL}>
-      <GlobalStyle />
+    <div className={`relative bg-[#f3f4f6] text-[#0f1720] font-sans font-normal leading-normal ${isRTL ? 'text-right' : 'text-left'} text-lg break-words min-h-[100px] border border-[#e6e9ee] flex-1`}>
       {translatedText.length === 0 ? (
-        <Placeholder>
+        <div className="flex flex-col items-center justify-center h-full min-h-[100px] text-[#9ca3af] text-base font-normal p-4 px-6 text-center leading-relaxed">
           <div key={placeholderIndex}>
-            {messages[placeholderIndex]}<Cursor />
+            {messages[placeholderIndex]}<span className="inline-block w-2 h-2 bg-[#9ca3af] rounded-full ml-1 align-baseline relative -top-0.5 animate-blink" />
           </div>
-        </Placeholder>
+        </div>
       ) : (
-        <div>
+        <div className="p-4 overflow-auto max-h-[68vh] blue-scrollbar">
           {translatedText.map((line, index) => (
             <React.Fragment key={index}>
               {line || <br />}
@@ -204,103 +170,17 @@ const TranslatedText = () => {
         </div>
       )}
       {translatedText.length !== 0 && (
-        <Actions>
-          <button onClick={copyHandler} aria-label="Copiar texto">
-            <div style={{ color: "#2196F3" }}>
+        <div className="absolute bottom-2.5 right-2.5">
+          <button onClick={copyHandler} aria-label="Copiar texto" className="bg-none border-none cursor-pointer p-1 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 hover:not-disabled:scale-110">
+            <div className="text-[#2196F3]">
               <CopyIcon />
             </div>
           </button>
-        </Actions>
+        </div>
       )}
-      {copied && <Toast>Text copied</Toast>}
-    </Container>
+      {copied && <div className="absolute bottom-[50px] left-1/2 -translate-x-1/2 bg-[#333] text-white px-4 py-2 rounded-lg text-[13px] font-sans shadow-[0_4px_12px_rgba(0,0,0,0.15)] z-20 animate-fadeIn whitespace-nowrap">Text copied</div>}
+    </div>
   );
 };
-
-const Placeholder = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  min-height: 100px;
-  color: #9ca3af;
-  font-size: 16px;
-  font-weight: 400;
-  padding: 16px 24px;
-  text-align: center;
-  line-height: 1.6;
-`;
-
-const Container = styled.div<{ $rtl: boolean }>`
-  position: relative;
-  background-color: #f3f4f6;
-  color: #0f1720;
-  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  font-weight: 400;
-  line-height: 1.4;
-  text-align: ${(props) => (props.$rtl ? "right" : "left")};
-  font-size: 18px;
-  word-break: break-word;
-  min-height: 100px;
-
-  div {
-    padding: 16px;
-    overflow: auto;
-    max-height: 68vh;
-
-    &::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: #bdbdbd;
-      border-radius: 4px;
-    }
-  }
-  border: 1px solid #e6e9ee;
-`;
-
-const Actions = styled.div`
-  button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 5px;
-    transition: all 0.2s ease;
-
-    &:disabled {
-      cursor: not-allowed;
-      opacity: 0.5;
-    }
-
-    &:hover:not(:disabled) {
-      transform: scale(1.1);
-    }
-  }
-
-  button {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-  }
-`;
-
-const Toast = styled.div`
-  position: absolute;
-  bottom: 50px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #333;
-  color: #fff;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  z-index: 20;
-  animation: fadeIn 0.2s ease;
-  white-space: nowrap;
-`;
 
 export default TranslatedText;

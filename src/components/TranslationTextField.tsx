@@ -1,5 +1,4 @@
 import React from "react";
-import styled, { createGlobalStyle } from "styled-components";
 import { message } from "antd";
 import CloseIcon from "../assets/CloseIcon";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
@@ -7,150 +6,6 @@ import { useSearchParams } from "react-router-dom";
 import MicIcon from "assets/MicIcon";
 import PauseIcon from "assets/PauseIcon";
 import { DEFAULT_SOURCE_LANGUAGE } from "utils/constants";
-
-const Cursor = styled.span`
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  background: #9ca3af;
-  border-radius: 50%;
-  margin-left: 4px;
-  vertical-align: baseline;
-  position: relative;
-  top: -2px;
-  animation: blink 0.8s step-end infinite;
-`;
-
-const PlaceholderOverlay = styled.div<{ $visible: boolean }>`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: 16px 40px 24px 16px;
-  font-size: 18px;
-  color: #9ca3af;
-  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  pointer-events: none;
-  display: ${(props) => (props.$visible ? "block" : "none")};
-`;
-
-const Container = styled.div<{ $hasText: boolean }>`
-  position: relative;
-  height: auto;
-  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-  font-weight: 400;
-  line-height: 1.4;
-  max-height: 100vh;
-
-  textarea {
-    width: 100%;
-    height: 87%;
-    background-color: #ffffff;
-    border: none;
-    outline: none;
-    box-shadow: none;
-    color: #111111;
-    font-family: inherit;
-    font-weight: 400;
-    letter-spacing: 0.2px;
-    padding: 16px 40px 24px 16px;
-    font-size: 18px;
-    resize: none;
-    transition: all 0.1s ease;
-    
-
-    &:focus {
-      outline: none;
-      box-shadow: none;
-    }
-
-    &::-webkit-scrollbar {
-      width: 12px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      border-radius: 20px;
-      background-color: #e0e0e0;
-    }
-  }
-
-  .text-clear {
-    display: ${(props) => (props.$hasText ? "block" : "none")};
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    transition: opacity 0.2s ease;
-    color: #333333;
-
-    &:hover {
-      opacity: 0.8;
-    }
-  }
-`;
-
-const GlobalStyle = createGlobalStyle`
-  @keyframes pulse {
-    0% { transform: scale(0.95); opacity: 0.7; }
-    70% { transform: scale(1.1); opacity: 0.3; }
-    100% { transform: scale(0.95); opacity: 0.7; }
-  }
-  @keyframes blink {
-    50% { opacity: 0; }
-  }
-`;
-
-const Actions = styled.div`
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-
-  button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 5px;
-    transition: all 0.2s ease;
-    position: relative;
-    color: #111111;
-    
-    &:disabled {
-      cursor: not-allowed;
-      opacity: 0.5;
-    }
-
-    &:hover:not(:disabled) {
-      transform: scale(1.05);
-    }
-  }
-
-  .error-message {
-    color: #ff4444;
-    font-size: 12px;
-    margin-left: 10px;
-    animation: fadeIn 0.2s ease;
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-  }
-
-  .pulse-indicator {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    border: 2px solid rgba(0,0,0,0.06);
-    animation: pulse 1s infinite;
-  }
-`;
 
 const TranslationTextField = () => {
   const [searchParams, setURLSearchParams] = useSearchParams();
@@ -221,35 +76,30 @@ const TranslationTextField = () => {
     };
     type();
     return () => { if (timer !== null) window.clearTimeout(timer); };
-  }, [text === ""]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text ? 'filled' : 'empty']);
 
   // VAD (Voice Activity Detection) settings - OPTIMIZED FOR VOICE IN MUSIC & NOISE REJECTION
   // Detección: voces en canciones, susurros, gritos | Ignora: viento, respiración, ruido blanco
-  const baseVolumeThreshold = 0.01; // umbral bajo para detectar voces rápidamente
-  const vadCheckInterval = 25; // ms entre comprobaciones de VAD (detección más rápida)
-  const activeHoldCount = 1; // frames consecutivos para activación más rápida
-  const silenceHoldCount = 2; // frames consecutivos para detección de silencio más rápida
-  const silenceTimeout = 800; // ms de silencio adicional (más rápido)
-  const rmsSmoothingAlpha = 0.30; // coeficiente EMA mejorado para respuesta más rápida
-  const adaptiveMultiplier = 2.0; // umbral adaptativo más sensible
-  const peakVoiceThreshold = 0.45; // umbral directo más bajo para detectar voces
-  const spectralCentroidThreshold = 1200; // Hz - rango reducido para detección más rápida
-  const formantRatioThreshold = 0.30; // ratio más bajo para mejor sensibilidad
-  const spectralFlatnessThreshold = 0.45; // umbral relajado para mayor sensibilidad
-  const zeroCrossingThreshold = 0.18; // umbral relajado para mejor respuesta
-  const windNoiseThreshold = 35; // energía baja en medios/altos = viento/respiración
+  const baseVolumeThreshold = 0.01;
+  const vadCheckInterval = 25;
+  const activeHoldCount = 1;
+  const silenceHoldCount = 2;
+  const silenceTimeout = 800;
+  const rmsSmoothingAlpha = 0.30;
+  const adaptiveMultiplier = 2.0;
+  const peakVoiceThreshold = 0.45;
+  const spectralCentroidThreshold = 1200;
+  const formantRatioThreshold = 0.30;
+  const spectralFlatnessThreshold = 0.45;
+  const zeroCrossingThreshold = 0.18;
+  const windNoiseThreshold = 35;
 
-  // Límite máximo de caracteres para el transcript acumulado (previene memory leak)
-  const MAX_TRANSCRIPT_LENGTH = 10000;
-  
-  // Límite máximo para URL params (los navegadores tienen límites en la longitud de URLs)
   const MAX_URL_TEXT_LENGTH = 8000;
 
-  // Solicitar permiso y listar dispositivos al inicio
   React.useEffect(() => {
     const initDevices = async () => {
       try {
-        // If a device was already selected, skip re-requesting permissions
         if (selectedDeviceId) return;
 
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -269,7 +119,6 @@ const TranslationTextField = () => {
     const trimmedValue = value.trim() === "" ? "" : value;
     setText(trimmedValue);
     
-    // Truncar texto para URL (previene problemas con URLs muy largas)
     const truncatedValue = trimmedValue.length > MAX_URL_TEXT_LENGTH
       ? trimmedValue.slice(0, MAX_URL_TEXT_LENGTH)
       : trimmedValue;
@@ -284,11 +133,8 @@ const TranslationTextField = () => {
     });
   }, [setURLSearchParams, MAX_URL_TEXT_LENGTH]);
 
-  // Sync local `text` state when the URL `text` param changes externally
-  // (for example, when the user swaps languages and another component
-  // writes the translated text into the `text` param).
   React.useEffect(() => {
-    if (manualEditRef.current) return; // don't override user's manual edits
+    if (manualEditRef.current) return;
     if (urlTextParam !== text) {
       setText(urlTextParam);
     }
@@ -299,14 +145,12 @@ const TranslationTextField = () => {
     resetTranscript();
     if (listening) {
       await SpeechRecognition.stopListening();
-      SpeechRecognition.abortListening(); // Forzar el cese inmediato de la escucha
+      SpeechRecognition.abortListening();
     }
-    // Solo limpiar recursos si el usuario NO quiere mantener el micrófono encendido
     if (!keepMicOnRef.current) await cleanupAudioProcessing();
   };
 
   const handleChangeText = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    // Marcar edición manual para evitar que la VAD/transcripción la sobrescriba inmediatamente
     if (manualEditTimeoutRef.current) {
       window.clearTimeout(manualEditTimeoutRef.current);
       manualEditTimeoutRef.current = null;
@@ -319,13 +163,11 @@ const TranslationTextField = () => {
 
     setTextParam(e.target.value);
 
-    // Si el usuario borró todo el texto, también limpiar la transcripción
     if (e.target.value.trim() === "") {
       resetTranscript();
     }
   };
 
-  // Optimized speech recognition handling
   const handleSpeech = async () => {
     try {
       setIsProcessing(true);
@@ -341,7 +183,6 @@ const TranslationTextField = () => {
           alert("Por favor permite acceso al micrófono");
           return;
         }
-        // Inicializar procesamiento de audio con constraints y VAD
         await setupAudioProcessing(selectedDeviceId);
 
         await SpeechRecognition.startListening({
@@ -359,7 +200,6 @@ const TranslationTextField = () => {
 
   const cleanupAudioProcessing = React.useCallback(async () => {
     try {
-      // Si el usuario quiere mantener el micrófono encendido, no cerramos los recursos
       const shouldClose = !keepMicOnRef.current;
 
       if (shouldClose) {
@@ -368,17 +208,14 @@ const TranslationTextField = () => {
           vadIntervalRef.current = null;
         }
 
-        // Limpiar timeout de silencio
         if (silenceTimerRef.current) {
           window.clearTimeout(silenceTimerRef.current);
           silenceTimerRef.current = null;
         }
 
-        // Reset VAD counters
         activeFramesRef.current = 0;
         silentFramesRef.current = 0;
         
-        // Limpiar refs de buffers (previene memory leak)
         floatDataRef.current = null;
         byteDataRef.current = null;
         fftDataRef.current = null;
@@ -403,16 +240,15 @@ const TranslationTextField = () => {
     } catch (err) {
       console.warn('Error during cleanupAudioProcessing', err);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const setupAudioProcessing = React.useCallback(async (deviceId: string | null) => {
-    // Guardar refs viejas antes de tocarlas
     const oldAudioCtx = audioContextRef.current;
     const oldStream = mediaStreamRef.current;
     const shouldClose = !keepMicOnRef.current;
 
-    // PASO 1: Crear el AudioContext NUEVO ANTES de cualquier await (crítico para móviles)
     const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
     const audioCtx = new AudioContextClass();
     audioContextRef.current = audioCtx;
@@ -421,7 +257,6 @@ const TranslationTextField = () => {
     }
 
     try {
-      // PASO 2: Limpiar recursos VIEJOS (VAD, stream, AudioContext anterior)
       if (shouldClose) {
         if (vadIntervalRef.current) {
           window.clearInterval(vadIntervalRef.current);
@@ -450,7 +285,6 @@ const TranslationTextField = () => {
         try { await oldAudioCtx.close(); } catch(e) {}
       }
 
-      // PASO 3: Obtener nuevo stream de micrófono
       const constraints: MediaStreamConstraints = {
         audio: {
           deviceId: deviceId ? { exact: deviceId } : undefined,
@@ -462,7 +296,6 @@ const TranslationTextField = () => {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       mediaStreamRef.current = stream;
 
-      // PASO 4: Construir pipeline con el AudioContext creado en el paso 1
       const source = audioCtx.createMediaStreamSource(stream);
       const compressor = audioCtx.createDynamicsCompressor();
       const gain = audioCtx.createGain();
@@ -479,10 +312,8 @@ const TranslationTextField = () => {
     } catch (err) {
       console.error('No se pudo inicializar audio:', err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Asegura que la captura de audio esté activa (sin iniciar el reconocimiento)
   const ensureAudioStreamActive = React.useCallback(async () => {
     try {
       if (!mediaStreamRef.current) {
@@ -493,17 +324,15 @@ const TranslationTextField = () => {
     }
   }, [selectedDeviceId, setupAudioProcessing]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const startVAD = React.useCallback(() => {
     if (!analyserRef.current) return;
     const analyser = analyserRef.current;
     currentAnalyserRef.current = analyser;
 
-    // Crear buffers UNA SOLA VEZ y reutilizarlos (previene memory leak)
     if (!floatDataRef.current || fftSizeRef.current !== analyser.fftSize) {
-      floatDataRef.current = new Float32Array(analyser.fftSize);
-      byteDataRef.current = new Uint8Array(analyser.fftSize);
-      fftDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+      floatDataRef.current = new Float32Array(analyser.fftSize) as Float32Array;
+      byteDataRef.current = new Uint8Array(analyser.fftSize) as Uint8Array;
+      fftDataRef.current = new Uint8Array(analyser.frequencyBinCount) as Uint8Array;
       fftSizeRef.current = analyser.fftSize;
     }
 
@@ -511,25 +340,20 @@ const TranslationTextField = () => {
     const byteData = byteDataRef.current;
     const fftData = fftDataRef.current;
 
-    // Comprobar nivel RMS en intervalos regulares con análisis espectral para voces en música
     vadIntervalRef.current = window.setInterval(() => {
       const analyser = currentAnalyserRef.current;
       if (!analyser || !floatData || !byteData || !fftData) return;
 
-      // Usar getByteTimeDomainData (más rápido que getFloatTimeDomainData)
-      analyser.getByteTimeDomainData(byteData);
+      analyser.getByteTimeDomainData(byteData as any);
       for (let i = 0; i < byteData.length; i++) {
         floatData[i] = (byteData[i] - 128) / 128;
       }
 
-      // Análisis FFT para detección de espectro (voces vs música/ruido)
-      analyser.getByteFrequencyData(fftData);
+      analyser.getByteFrequencyData(fftData as any);
 
-      // Calcular energía en rangos de frecuencia específicos para voz humana
       const nyquist = analyser.context.sampleRate / 2;
       const binWidth = nyquist / fftData.length;
       
-      // Rango bajo (60-250Hz) - fundamentales de voz
       const lowBinStart = Math.floor(60 / binWidth);
       const lowBinEnd = Math.floor(250 / binWidth);
       let lowEnergy = 0;
@@ -538,7 +362,6 @@ const TranslationTextField = () => {
       }
       lowEnergy /= (lowBinEnd - lowBinStart + 1);
 
-      // Rango medio (250-2000Hz) - formantes principales de voz
       const midBinStart = lowBinEnd;
       const midBinEnd = Math.floor(2000 / binWidth);
       let midEnergy = 0;
@@ -547,7 +370,6 @@ const TranslationTextField = () => {
       }
       midEnergy /= (midBinEnd - midBinStart + 1);
 
-      // Rango alto (2000-4000Hz) - armónicos de voz
       const highBinStart = midBinEnd;
       const highBinEnd = Math.floor(4000 / binWidth);
       let highEnergy = 0;
@@ -556,31 +378,25 @@ const TranslationTextField = () => {
       }
       highEnergy /= (highBinEnd - highBinStart + 1);
 
-      // Calcular ratios espectrales característicos de voz
       const formantRatio = (midEnergy + highEnergy) / (lowEnergy + midEnergy + 0.001);
-      const voiceSignature = midEnergy > lowEnergy * 0.7; // Voces tienen más energía media que baja
+      const voiceSignature = midEnergy > lowEnergy * 0.7;
 
-      // Calcular centroide espectral y flatness en un solo pass
       let numerator = 0;
       let denominator = 0;
       let geometricProduct = 1;
-      for (let i = highBinStart; i < highBinEnd; i++) { // Solo en rango de voz
+      for (let i = highBinStart; i < highBinEnd; i++) {
         const frequency = (i * nyquist) / fftData.length;
         numerator += frequency * fftData[i];
         denominator += fftData[i];
         if (fftData[i] > 0) geometricProduct *= Math.pow(fftData[i], 1 / (highBinEnd - highBinStart + 1));
       }
       const spectralCentroid = denominator > 0 ? numerator / denominator : 0;
-      const isSpectralInVoiceRange = spectralCentroid > spectralCentroidThreshold * 0.6; // 900Hz mínimo
+      const isSpectralInVoiceRange = spectralCentroid > spectralCentroidThreshold * 0.6;
 
-      // Calcular spectral flatness (Wiener entropy) - rechaza viento y ruido plano
-      // Voces: < 0.4 (con formantes) | Viento/Ruido: > 0.6 (espectro plano)
       const arithmeticMean = denominator / (highBinEnd - highBinStart + 1) || 1e-10;
       const spectralFlatness = Math.max(0, Math.min(1, geometricProduct / (arithmeticMean + 1e-10)));
-      const isNotWindNoise = spectralFlatness < spectralFlatnessThreshold; // rechaza espectro plano
+      const isNotWindNoise = spectralFlatness < spectralFlatnessThreshold;
 
-      // Calcular Zero Crossing Rate (ZCR) - detecta ruido vs voz estructurada
-      // Ruido: ZCR alto | Voz: ZCR bajo y consistente
       let zeroCrossings = 0;
       for (let i = 1; i < floatData.length; i++) {
         if ((floatData[i] > 0 && floatData[i - 1] <= 0) || (floatData[i] <= 0 && floatData[i - 1] > 0)) {
@@ -588,11 +404,10 @@ const TranslationTextField = () => {
         }
       }
       const zcr = zeroCrossings / floatData.length;
-      const isNotVoiceNoise = zcr < zeroCrossingThreshold; // rechaza ruido aleatorio (respiración)
+      const isNotVoiceNoise = zcr < zeroCrossingThreshold;
 
-      // Detectar viento/respiración: energía muy baja en rangos de voz
       const voiceEnergyRatio = (midEnergy + highEnergy) / (lowEnergy + 1e-6);
-      const isNotWindRespiration = voiceEnergyRatio > windNoiseThreshold * 0.01; // energía en rangos de voz
+      const isNotWindRespiration = voiceEnergyRatio > windNoiseThreshold * 0.01;
 
       let sum = 0;
       for (let i = 0; i < floatData.length; i++) {
@@ -601,21 +416,15 @@ const TranslationTextField = () => {
       }
       const rms = Math.sqrt(sum / floatData.length);
 
-      // Suavizado exponencial del RMS para evitar picos
       const prevSmooth = rmsSmoothRef.current || 0;
       const smooth = rmsSmoothingAlpha * rms + (1 - rmsSmoothingAlpha) * prevSmooth;
       rmsSmoothRef.current = smooth;
 
-      // Mantener estimación del ruido de fondo (mínimo adaptativo con ligero decaimiento hacia arriba)
       noiseFloorRef.current = Math.min(noiseFloorRef.current, smooth * 0.8);
-      // Decaimiento rápido hacia arriba para permitir mejor adaptación al ruido cambiante
       noiseFloorRef.current = Math.max(noiseFloorRef.current, noiseFloorRef.current * 1.001);
 
       const adaptiveThreshold = Math.max(baseVolumeThreshold, noiseFloorRef.current * adaptiveMultiplier + 0.003);
 
-      // Detección mejorada con rechazo de ruidos ambientales:
-      // Energía + firma espectral + centroide + flatness + ZCR + relación energía
-      // Ignora: instrumentales | viento | respiración | ruido blanco | plosivas
       const isVoiceDetected = 
         (smooth > adaptiveThreshold || rms > peakVoiceThreshold) &&
         (voiceSignature || formantRatio > formantRatioThreshold) &&
@@ -624,30 +433,24 @@ const TranslationTextField = () => {
         isNotVoiceNoise &&
         isNotWindRespiration;
 
-      // Mantener conteo de frames activos/silenciosos para evitar disparos por transitorios
       if (isVoiceDetected) {
         activeFramesRef.current += 1;
         silentFramesRef.current = 0;
 
-        // Limpiar timeout de silencio si hay actividad
         if (silenceTimerRef.current) {
           window.clearTimeout(silenceTimerRef.current);
           silenceTimerRef.current = null;
         }
 
         if (activeFramesRef.current >= activeHoldCount) {
-          // Nota: no iniciamos la grabación automáticamente por VAD.
-          // La app solo debe grabar cuando el usuario pulse el icono del micrófono.
         }
       } else {
         silentFramesRef.current += 1;
         activeFramesRef.current = 0;
 
         if (silentFramesRef.current >= silenceHoldCount) {
-            // Iniciar timeout de silencio adicional para confirmación de pausa extendida
             if (!silenceTimerRef.current && listening) {
               silenceTimerRef.current = window.setTimeout(() => {
-                // Si el usuario activó "keepMicOn", no detener la escucha automáticamente
                 if (listening && !keepMicOnRef.current) {
                   SpeechRecognition.stopListening().catch(()=>{});
                 }
@@ -694,20 +497,17 @@ const TranslationTextField = () => {
     }
   }, [listening]);
 
-  // Mantener referencia y persistencia para el toggle keepMicOn
   React.useEffect(() => {
     keepMicOnRef.current = keepMicOn;
     try {
       localStorage.setItem("keepMicOn", keepMicOn ? "true" : "false");
     } catch (e) {}
 
-    // Si se activa el toggle, mantener la captura activa (no necesariamente iniciar reconocimiento)
     if (keepMicOn) {
       if (browserSupportsSpeechRecognition && isMicrophoneAvailable) {
         ensureAudioStreamActive();
       }
     } else {
-      // Si se desactiva, detener la escucha y forzar el cierre de recursos
       if (listening) {
         SpeechRecognition.stopListening().catch(()=>{});
       }
@@ -716,12 +516,13 @@ const TranslationTextField = () => {
   }, [keepMicOn, browserSupportsSpeechRecognition, isMicrophoneAvailable, ensureAudioStreamActive, listening, cleanupAudioProcessing]);
 
   return (
-    <Container $hasText={!!text}>
-      <GlobalStyle />
-      <div style={{ height: "100%", position: "relative" }}>
-        <PlaceholderOverlay $visible={!text && !!placeholder}>
-          {placeholder}<Cursor />
-        </PlaceholderOverlay>
+    <div className="relative h-auto font-sans font-normal leading-normal max-h-screen flex-1">
+      <div className="h-full relative">
+        <div
+          className={`absolute top-0 left-0 right-0 p-4 pr-10 pb-6 text-lg text-[#9ca3af] font-sans pointer-events-none ${!text && placeholder ? 'block' : 'hidden'}`}
+        >
+          {placeholder}<span className="inline-block w-2 h-2 bg-[#9ca3af] rounded-full ml-1 align-baseline relative -top-0.5 animate-blink" />
+        </div>
         <textarea
           ref={textareaRef}
           value={text}
@@ -731,30 +532,34 @@ const TranslationTextField = () => {
           autoFocus
           spellCheck={false}
           maxLength={MAX_URL_TEXT_LENGTH}
+          className="w-full h-[87%] bg-white border-none outline-none shadow-none text-[#111111] p-4 pr-10 pb-6 text-lg resize-none transition-all duration-100 focus:outline-none focus:shadow-none custom-scrollbar"
         ></textarea>
         {text && (
-          <button className="text-clear" onClick={clearTextHandler} aria-label="Limpiar texto">
+          <button
+            className="absolute top-4 right-4 bg-none border-none cursor-pointer p-0 transition-opacity duration-200 text-[#333] hover:opacity-80"
+            onClick={clearTextHandler}
+            aria-label="Limpiar texto"
+          >
             <CloseIcon />
           </button>
         )}
       </div>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 8 }}>
-        <span style={{ fontSize: 11, color: '#999' }}>
+      <div className="flex gap-2 items-center mt-2">
+        <span className="text-[11px] text-[#999]">
           {text.length.toLocaleString()} / {MAX_URL_TEXT_LENGTH.toLocaleString()}
         </span>
-        
         
         <button onClick={async () => {
           try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             stream.getTracks().forEach(t => t.stop());
           } catch (err) { console.warn(err); }
-        }} style={{ background: 'none', border: 'none', color: '#333', cursor: 'pointer' }} aria-label="Refrescar dispositivos">↻</button>
+        }} className="bg-none border-none text-[#333] cursor-pointer" aria-label="Refrescar dispositivos">↻</button>
       </div>
-      <Actions>
+      <div className="absolute bottom-2.5 left-2.5 flex items-center gap-4">
         {browserSupportsSpeechRecognition ? (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 role="switch"
@@ -762,16 +567,7 @@ const TranslationTextField = () => {
                 aria-label="Toggle keep microphone on"
                 onClick={() => setKeepMicOn(prev => !prev)}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setKeepMicOn(prev => !prev); } }}
-                style={{
-                  width: 44,
-                  height: 24,
-                  borderRadius: 12,
-                  background: keepMicOn ? '#4caf50' : '#000000',
-                  border: 'none',
-                  position: 'relative',
-                  cursor: 'pointer',
-                  padding: 0,
-                }}
+                className={`w-11 h-6 rounded-full border-none relative cursor-pointer p-0 ${keepMicOn ? 'bg-[#4caf50]' : 'bg-black'}`}
               >
                 <span style={{
                   position: 'absolute',
@@ -785,7 +581,7 @@ const TranslationTextField = () => {
                   boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                 }} />
               </button>
-              <span style={{ color: '#333', fontSize: 12 }}>Keep microphone on</span>
+              <span className="text-[#333] text-xs">Keep microphone on</span>
             </div>
             <button 
               onMouseDown={() => { if (!mediaStreamRef.current && keepMicOn) ensureAudioStreamActive(); }}
@@ -793,6 +589,7 @@ const TranslationTextField = () => {
               onClick={handleSpeech}
               disabled={isProcessing}
               aria-label={listening ? "Detener reconocimiento" : "Iniciar reconocimiento"}
+              className="bg-none border-none cursor-pointer p-1 transition-all duration-200 text-[#111] disabled:cursor-not-allowed disabled:opacity-50 hover:not-disabled:scale-105"
             >
               {listening ? <PauseIcon /> : <MicIcon />}
             </button>
@@ -801,12 +598,12 @@ const TranslationTextField = () => {
           <p>Reconocimiento de voz no soportado</p>
         )}
         {!isMicrophoneAvailable && browserSupportsSpeechRecognition && (
-          <div className="error-message">
+          <div className="text-[#ff4444] text-xs ml-2.5 animate-fadeIn">
             Micrófono no detectado
           </div>
         )}
-      </Actions>
-    </Container>
+      </div>
+    </div>
   );
 };
 

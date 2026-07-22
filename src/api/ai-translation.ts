@@ -1,5 +1,5 @@
 import axios from "axios";
-import LRUCache from "lru-cache";
+import { LRUCache } from "lru-cache";
 
 const NVIDIA_API_URL = "/api/nvidia/chat/completions";
 const MODEL = "mistralai/mistral-small-4-119b-2603";
@@ -45,7 +45,6 @@ const getLanguageName = (code: string): string => {
 };
 
 const buildSystemPrompt = (targetLang: string, sourceLang: string): string => {
-  const sourceName = getLanguageName(sourceLang);
   const targetName = getLanguageName(targetLang);
 
   let styleRules = "";

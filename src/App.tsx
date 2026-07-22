@@ -2,56 +2,26 @@ import LanguagesBar from "./components/LanguagesBar";
 import TranslationTextField from "./components/TranslationTextField";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import TranslatedText from "components/TranslatedText";
-import styled, { ThemeProvider } from "styled-components";
-import { palette } from "theme/palette";
 
 function App() {
   return (
-    <ThemeProvider theme={palette}>
-      <Router>
-        <Routes>
-          <Route
-            path="/"
-            Component={() => (
-              <Container>
-                <LanguagesBar />
-                <div className="translation-boxes">
-                  <TranslationTextField />
-                  <TranslatedText />
-                </div>
-              </Container>
-            )}
-          />
-        </Routes>
-      </Router>
-    </ThemeProvider>
+    <Router>
+      <Routes>
+        <Route
+          path="/"
+          Component={() => (
+            <div className="text-center text-[#111111] h-[80vh] w-[97vw] bg-white rounded-2xl mx-auto mt-[10vh] overflow-hidden flex flex-col font-sans">
+              <LanguagesBar />
+              <div className="flex-1 flex">
+                <TranslationTextField />
+                <TranslatedText />
+              </div>
+            </div>
+          )}
+        />
+      </Routes>
+    </Router>
   );
 }
-
-const Container = styled.div`
-  text-align: center;
-  color: #111111;
-  height: 80vh; /* Aumentado de 70vh a 80vh */
-  width: 97vw;  /* Aumentado de 80vw a 90vw */
-  background-color: #ffffff;
-  border-radius: 16px;
-  margin: 0 auto;
-  margin-top: 10vh;
-  overflow: hidden;
-  perspective: 1px;
-  display: flex;
-  flex-direction: column;
-
-  .translation-boxes {
-    flex-grow: 1;
-    display: flex;
-  }
-
-  .translation-boxes div {
-    flex: 1;
-    height: auto;
-  }
-`;
-
 
 export default App;

@@ -1,6 +1,5 @@
 import React from "react";
-import styled from "styled-components";
-import { Select, SelectProps } from "antd";
+import { Select } from "antd";
 import { useSearchParams } from "react-router-dom";
 import { 
   AVAILABLE_LANGUAGES, 
@@ -8,7 +7,6 @@ import {
   DEFAULT_TARGET_LANGUAGE 
 } from "utils/constants";
 import { SwitchIcon } from "../assets/SwitchIcon";
-// removed unused `palette` import and `LanguageOption` type
 
 const LanguagesBar = () => {
   const [searchParams, setURLSearchParams] = useSearchParams();
@@ -73,116 +71,40 @@ const LanguagesBar = () => {
   }, [searchParams, setLangParam]);
 
   return (
-    <Container>
-      <StyledSelect<string>
+    <div className="bg-primary-main flex items-center px-4 gap-3 border-b border-primary-700 max-sm:px-2 max-sm:gap-1.5">
+      <Select<string>
         value={sourceLang}
         onChange={handleChangeSourceLang}
         options={languageOptions as unknown as { value: string; label: string }[]}
         aria-label="Seleccionar idioma origen"
         popupMatchSelectWidth={false}
+        className="lang-select min-w-[140px] flex-1 max-sm:min-w-[120px]"
       />
       
-      <SwitchButton 
+      <button
         onClick={switchLangsHandler}
         aria-label="Intercambiar idiomas"
+        className="bg-none border-none cursor-pointer p-2 rounded transition-all duration-200 hover:bg-primary-500 hover:rotate-180 hover:scale-110 active:rotate-180 active:scale-95 max-sm:p-1 [&_svg]:block [&_svg]:w-6 [&_svg]:h-6 [&_svg]:fill-primary-contrast max-sm:[&_svg]:w-5 max-sm:[&_svg]:h-5"
       >
         <SwitchIcon />
-      </SwitchButton>
+      </button>
       
-      <StyledSelect<string>
+      <Select<string>
         value={targetLang}
         onChange={handleChangeTargetLang}
         options={languageOptions as unknown as { value: string; label: string }[]}
         aria-label="Seleccionar idioma destino"
         popupMatchSelectWidth={false}
+        className="lang-select min-w-[140px] flex-1 max-sm:min-w-[120px]"
       />
-    </Container>
+    </div>
   );
 };
 
-// Helpers
 const validateLang = (lang: string | null, fallback: string): string => {
   return lang && AVAILABLE_LANGUAGES.some(l => l.code === lang) 
     ? lang 
     : fallback;
 };
-
-// Styled components
-const Container = styled.div`
-  background-color: ${props => props.theme.primary.main};
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  gap: 12px;
-  border-bottom: 1px solid ${props => props.theme.primary[700]};
-  
-  @media (max-width: 480px) {
-    padding: 0 8px;
-    gap: 6px;
-  }
-`;
-
-const StyledSelect = styled(Select<string>)<SelectProps<string>>`
-  min-width: 140px;
-  flex: 1;
-  
-  .ant-select-selector {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    color: ${props => props.theme.primary.contrastText} !important;
-    font-size: 16px !important;
-    padding: 16px 0 !important;
-    height: auto !important;
-    
-    .ant-select-selection-item {
-      color: inherit !important;
-      font-weight: 500;
-      text-transform: uppercase;
-    }
-  }
-
-  .ant-select-arrow {
-    color: ${props => props.theme.primary.contrastText} !important;
-  }
-  
-  @media (max-width: 480px) {
-    min-width: 120px;
-    font-size: 14px !important;
-  }
-`;
-
-const SwitchButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: ${props => props.theme.primary[500]};
-    transform: rotate(180deg) scale(1.1);
-  }
-  
-  &:active {
-    transform: rotate(180deg) scale(0.95);
-  }
-  
-  svg {
-    display: block;
-    width: 24px;
-    height: 24px;
-    fill: ${props => props.theme.primary.contrastText};
-  }
-  
-  @media (max-width: 480px) {
-    padding: 4px;
-    svg {
-      width: 20px;
-      height: 20px;
-    }
-  }
-`;
 
 export default React.memo(LanguagesBar);
