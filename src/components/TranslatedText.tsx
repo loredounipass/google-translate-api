@@ -37,8 +37,7 @@ const TranslatedText = () => {
       if (translated) {
         const normalizedText = translated
           .split("\n")
-          .map(line => line.trim())
-          .filter(line => line.length > 0);
+          .map(line => line.trim());
         setTranslatedText(normalizedText.length ? normalizedText : [translated.trim()]);
       }
     } catch (error) {
@@ -152,12 +151,8 @@ const TranslatedText = () => {
           </div>
         </div>
       ) : (
-        <div className="p-4 overflow-auto max-h-[68vh] blue-scrollbar">
-          {translatedText.map((line, index) => (
-            <React.Fragment key={index}>
-              {line || <br />}
-            </React.Fragment>
-          ))}
+        <div className="p-4 overflow-auto max-h-[68vh] blue-scrollbar h-full whitespace-pre-wrap">
+          {translatedText.join("\n")}
         </div>
       )}
       {translatedText.length !== 0 && (

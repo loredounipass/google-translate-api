@@ -96,43 +96,34 @@ const GLOSSARY: Record<string, Record<string, Record<string, string>>> = {
 const buildSystemPrompt = (targetLang: string, sourceLang: string): string => {
   const targetName = getLanguageName(targetLang);
 
-  let styleRules = "";
-  if (sourceLang === "es" && targetLang === "en") {
-    // Generar reglas desde el glosario automáticamente para todos los dominios
-    const automotiveTerms = Object.entries(GLOSSARY["es-en"].automotive)
-      .map(([es, en]) => `    - "${es}" → "${en}"`)
-      .join("\n");
-      
-    const medicalTerms = Object.entries(GLOSSARY["es-en"].medical_vns)
-      .map(([es, en]) => `    - "${es}" → "${en}"`)
-      .join("\n");
-      
-    const legalTerms = Object.entries(GLOSSARY["es-en"].legal_us)
-      .map(([es, en]) => `    - "${es}" → "${en}"`)
-      .join("\n");
-      
-    styleRules = `
-STYLE RULES (es→en) - MANDATORY:
-- Use professional American English (US dialect, not British).
-- Maintain formal/professional tone appropriate for business contexts.
-- Domain-specific terms MUST use natural American English equivalents. Based on context, apply these:
+  // Generar reglas desde el glosario automáticamente para todos los dominios
+  const automotiveTerms = Object.entries(GLOSSARY["es-en"].automotive)
+    .map(([es, en]) => `    - "${es}" → "${en}"`)
+    .join("\n");
+    
+  const medicalTerms = Object.entries(GLOSSARY["es-en"].medical_vns)
+    .map(([es, en]) => `    - "${es}" → "${en}"`)
+    .join("\n");
+    
+  const legalTerms = Object.entries(GLOSSARY["es-en"].legal_us)
+    .map(([es, en]) => `    - "${es}" → "${en}"`)
+    .join("\n");
+
+  let dialectRule = "";
+  if (targetLang === "en") dialectRule = "\n- Use professional American English (US dialect, not British).";
+  else if (targetLang === "es") dialectRule = "\n- Use professional Spanish (neutral Latin American dialect).";
+
+  const styleRules = `
+STYLE RULES & DOMAIN TERMINOLOGY - MANDATORY:
+- Maintain formal/professional tone appropriate for business, medical, and legal contexts.${dialectRule}
+- When translating concepts related to the following domains, you MUST use the exact domain-specific terminology equivalent to these standard references (shown as Spanish->English reference, but apply the exact professional equivalent in ${targetName}):
   [AUTOMOTIVE]:
 ${automotiveTerms}
   [MEDICAL / VNS HEALTH / MEDICARE]:
 ${medicalTerms}
   [US LEGAL / COURT]:
 ${legalTerms}
-- Analyze context to determine the domain, then choose the most natural American English equivalent.`;
-  } else if (sourceLang === "en" && targetLang === "es") {
-    styleRules = `
-STYLE RULES (en→es) - MANDATORY:
-- Use professional Spanish (neutral Latin American dialect).
-- Maintain formal/professional tone appropriate for business contexts.`;
-  } else {
-    styleRules = `
-STYLE RULES - MANDATORY:
-- Use professional and natural language in the target language.`;
-  }
+- Analyze context to determine the domain, then choose the most natural and accurate professional terminology.`;
 
   return `You are an elite, highly precise professional interpreter. You MUST obey the following rules WITHOUT EXCEPTION.
 
@@ -159,8 +150,6 @@ ${styleRules}
 </execution_instructions>`;
 };
 
-const normalizeText = (text: string): string => text.trim().replace(/\s+/g, " ");
-
 // 1. Cortocircuito Inteligente
 const isTrivialText = (text: string): boolean => {
   // Solo números, puntuación básica o espacios
@@ -178,7 +167,7 @@ export const translate = async (
   modelId: string,
   options?: { signal?: AbortSignal }
 ): Promise<string> => {
-  const cleanedText = normalizeText(text);
+  const cleanedText = text.trim();
   if (!cleanedText) throw new Error("El texto a traducir no puede estar vacío.");
 
   // Cortocircuito Inteligente: No llamar a la IA para texto que no necesita traducción
