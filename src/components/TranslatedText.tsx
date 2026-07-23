@@ -6,6 +6,18 @@ import CopyIcon from "assets/CopyIcon";
 import { DEFAULT_SOURCE_LANGUAGE, DEFAULT_TARGET_LANGUAGE, DEFAULT_MODEL, AI_MODELS } from "utils/constants";
 import { debounce } from "lodash";
 
+const cleanText = (rawText: string) => {
+  const translationMatch = rawText.match(/<translation>([\s\S]*?)(?:<\/translation>|$)/);
+  if (translationMatch) {
+    return translationMatch[1].trimStart();
+  }
+  const thinkingMatch = rawText.match(/<\/thinking>([\s\S]*)/);
+  if (thinkingMatch) {
+    return thinkingMatch[1].trimStart();
+  }
+  return "";
+};
+
 const TranslatedText = () => {
   const [searchParams] = useSearchParams();
   const text = searchParams.get("text") || "";
@@ -32,11 +44,17 @@ const TranslatedText = () => {
   
       const translated = await translate(targetLang, sourceLang, value, mId, {
         signal: abortControllerRef.current.signal,
-        onData: (text) => setTranslatedText([text]),
+        onData: (text) => {
+          const cleaned = cleanText(text);
+          if (cleaned) {
+            setTranslatedText([cleaned]);
+          }
+        },
       });
       
       if (translated) {
-        setTranslatedText([translated]);
+        const cleaned = cleanText(translated);
+        setTranslatedText(cleaned ? [cleaned] : []);
       }
     } catch (error) {
       if (axios.isCancel(error)) return;
