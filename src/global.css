@@ -10,6 +10,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dark body {
+  background-color: #0f172a; /* slate-900 */
+  color: #f1f5f9; /* slate-100 */
+}
+
 .lang-select .ant-select-selector {
   background: transparent !important;
   border: none !important;
@@ -20,6 +25,10 @@ body {
   height: auto !important;
 }
 
+.dark .lang-select .ant-select-selector {
+  color: #e2e8f0 !important; /* slate-200 */
+}
+
 .lang-select .ant-select-selection-item {
   color: inherit !important;
   font-weight: 500;
@@ -28,6 +37,10 @@ body {
 
 .lang-select .ant-select-arrow {
   color: #000000 !important;
+}
+
+.dark .lang-select .ant-select-arrow {
+  color: #94a3b8 !important; /* slate-400 */
 }
 
 @media (max-width: 480px) {
@@ -48,6 +61,10 @@ body {
   background-color: #e0e0e0;
 }
 
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #334155; /* slate-700 */
+}
+
 .blue-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
@@ -55,4 +72,8 @@ body {
 .blue-scrollbar::-webkit-scrollbar-thumb {
   background: #bdbdbd;
   border-radius: 4px;
+}
+
+.dark .blue-scrollbar::-webkit-scrollbar-thumb {
+  background: #475569; /* slate-600 */
 }

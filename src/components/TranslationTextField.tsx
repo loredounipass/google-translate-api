@@ -540,9 +540,9 @@ const TranslationTextField = () => {
     <div className="relative h-auto font-sans font-normal leading-normal max-h-screen flex-1">
       <div className="h-full relative">
         <div
-          className={`absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center text-lg text-[#9ca3af] font-sans pointer-events-none ${!text && placeholder ? 'flex' : 'hidden'}`}
+          className={`absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center text-lg text-[#9ca3af] dark:text-slate-500 font-sans pointer-events-none ${!text && placeholder ? 'flex' : 'hidden'}`}
         >
-          {placeholder}<span className="inline-block w-2 h-2 bg-[#9ca3af] rounded-full ml-1 align-baseline relative -top-0.5 animate-blink" />
+          {placeholder}<span className="inline-block w-2 h-2 bg-[#9ca3af] dark:bg-slate-500 rounded-full ml-1 align-baseline relative -top-0.5 animate-blink" />
         </div>
         <textarea
           ref={textareaRef}
@@ -553,11 +553,11 @@ const TranslationTextField = () => {
           autoFocus
           spellCheck={false}
           maxLength={MAX_URL_TEXT_LENGTH}
-          className="w-full h-[87%] bg-white border-none outline-none shadow-none text-[#111111] p-4 pr-10 pb-6 text-lg resize-none transition-all duration-100 focus:outline-none focus:shadow-none custom-scrollbar"
+          className="w-full h-[87%] bg-white dark:bg-slate-800 border-none outline-none shadow-none text-[#111111] dark:text-slate-100 p-4 pr-10 pb-6 text-lg resize-none transition-colors duration-200 focus:outline-none focus:shadow-none custom-scrollbar"
         ></textarea>
         {text && (
           <button
-            className="absolute top-4 right-4 bg-none border-none cursor-pointer p-0 transition-opacity duration-200 text-[#333] hover:opacity-80"
+            className="absolute top-4 right-4 bg-none border-none cursor-pointer p-0 transition-opacity duration-200 text-[#333] dark:text-slate-400 hover:opacity-80 dark:hover:text-slate-200"
             onClick={clearTextHandler}
             aria-label="Limpiar texto"
           >
@@ -565,8 +565,8 @@ const TranslationTextField = () => {
           </button>
         )}
       </div>
-      <div className="flex gap-2 items-center mt-2">
-        <span className="text-[11px] text-[#999]">
+      <div className="flex gap-2 items-center mt-2 pl-3 md:pl-4">
+        <span className="text-[11px] text-[#999] dark:text-slate-500">
           {text.length.toLocaleString()} / {MAX_URL_TEXT_LENGTH.toLocaleString()}
         </span>
 
@@ -588,7 +588,7 @@ const TranslationTextField = () => {
                 aria-label="Toggle keep microphone on"
                 onClick={() => setKeepMicOn(prev => !prev)}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setKeepMicOn(prev => !prev); } }}
-                className={`w-11 h-6 rounded-full border-none relative cursor-pointer p-0 ${keepMicOn ? 'bg-[#4caf50]' : 'bg-black'}`}
+                className={`w-11 h-6 rounded-full border-none relative cursor-pointer p-0 transition-colors ${keepMicOn ? 'bg-[#4caf50] dark:bg-green-500' : 'bg-black dark:bg-slate-600'}`}
               >
                 <span style={{
                   position: 'absolute',
@@ -602,7 +602,7 @@ const TranslationTextField = () => {
                   boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                 }} />
               </button>
-              <span className="text-[#333] text-xs">{keepMicOn ? "Turn off" : "Turn on"}</span>
+              <span className="text-[#333] dark:text-slate-300 text-xs">{keepMicOn ? "Turn off" : "Turn on"}</span>
             </div>
             <button
               onMouseDown={() => { if (!mediaStreamRef.current && keepMicOn) ensureAudioStreamActive(); }}
@@ -610,7 +610,7 @@ const TranslationTextField = () => {
               onClick={handleSpeech}
               disabled={isProcessing}
               aria-label={listening ? "Detener reconocimiento" : "Iniciar reconocimiento"}
-              className="bg-none border-none cursor-pointer p-1 transition-all duration-200 text-[#111] disabled:cursor-not-allowed disabled:opacity-50 hover:not-disabled:scale-105"
+              className="bg-none border-none cursor-pointer p-1 transition-all duration-200 text-[#111] dark:text-slate-300 disabled:cursor-not-allowed disabled:opacity-50 hover:not-disabled:scale-105"
             >
               {listening ? <PauseIcon /> : <MicIcon />}
             </button>

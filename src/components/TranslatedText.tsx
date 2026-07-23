@@ -186,9 +186,9 @@ const TranslatedText = () => {
   }, []);
 
   return (
-    <div className={`relative bg-[#f3f4f6] text-[#0f1720] font-sans font-normal leading-normal ${isRTL ? 'text-right' : 'text-left'} text-lg break-words min-h-[100px] border-t md:border-t-0 md:border-l border-[#e6e9ee] flex-1 flex flex-col`}>
+    <div className={`relative bg-[#f3f4f6] dark:bg-slate-800 text-[#0f1720] dark:text-slate-100 font-sans font-normal leading-normal ${isRTL ? 'text-right' : 'text-left'} text-lg break-words min-h-[100px] border-t md:border-t-0 md:border-l border-[#e6e9ee] dark:border-slate-700/50 flex-1 flex flex-col transition-colors min-w-0 min-h-0`}>
       {translatedText.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-full min-h-[100px] text-[#9ca3af] text-base font-normal p-4 px-6 text-center leading-relaxed">
+        <div className="flex flex-col items-center justify-center h-full min-h-[100px] text-[#9ca3af] dark:text-slate-400 text-base font-normal p-4 px-6 text-center leading-relaxed">
           <div className="flex items-center justify-center">
             {displayedText}
             <span className="relative flex h-2 w-2 ml-1.5">
@@ -205,7 +205,7 @@ const TranslatedText = () => {
       {translatedText.length !== 0 && (
         <div className="absolute bottom-2.5 right-2.5">
           <button onClick={copyHandler} aria-label="Copiar texto" className="bg-none border-none cursor-pointer p-1 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 hover:not-disabled:scale-110">
-            <div className="text-[#2196F3]">
+            <div className="text-[#2196F3] dark:text-blue-400">
               <CopyIcon />
             </div>
           </button>
