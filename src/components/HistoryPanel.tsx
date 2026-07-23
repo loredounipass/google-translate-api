@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 interface HistoryItem {
   original: string;
@@ -13,6 +14,7 @@ interface HistoryPanelProps {
 
 const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const loadHistory = () => {
     try {
@@ -32,6 +34,13 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
     setHistory([]);
   };
 
+  const handleRestore = (originalText: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("text", originalText);
+    setSearchParams(newParams);
+    onClose();
+  };
+
   return (
     <>
       {/* Backdrop overlay */}
@@ -46,7 +55,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
         className={`fixed top-0 left-0 h-full w-80 md:w-96 bg-white dark:bg-slate-900 shadow-2xl z-[60] transform transition-transform duration-300 ease-in-out flex flex-col border-r border-slate-200 dark:border-slate-800 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
@@ -92,9 +101,13 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
                 </button>
               </div>
               {history.map((item, i) => (
-                <div key={i} className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 text-left animate-fadeIn">
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mb-1 truncate">{item.original}</p>
-                  <p className="text-sm text-slate-700 dark:text-slate-200 font-medium">{item.translated}</p>
+                <div 
+                  key={i} 
+                  onClick={() => handleRestore(item.original)}
+                  className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 text-left animate-fadeIn cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors group"
+                >
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mb-1 line-clamp-1 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors">{item.original}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-200 font-medium line-clamp-3">{item.translated}</p>
                 </div>
               ))}
             </div>
