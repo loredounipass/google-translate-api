@@ -34,6 +34,12 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
     setHistory([]);
   };
 
+  const deleteItem = (index: number) => {
+    const newHistory = history.filter((_, i) => i !== index);
+    localStorage.setItem("translation_history", JSON.stringify(newHistory));
+    setHistory(newHistory);
+  };
+
   const handleRestore = (originalText: string) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set("text", originalText);
@@ -104,9 +110,19 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
                 <div 
                   key={i} 
                   onClick={() => handleRestore(item.original)}
-                  className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 text-left animate-fadeIn cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors group"
+                  className="relative bg-white dark:bg-slate-800 p-3 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 text-left animate-fadeIn cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 transition-colors group"
                 >
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mb-1 line-clamp-1 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors">{item.original}</p>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); deleteItem(i); }}
+                    className="absolute top-2 right-2 p-1 text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded opacity-0 group-hover:opacity-100 transition-all"
+                    aria-label="Eliminar traducción"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mb-1 pr-6 line-clamp-1 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors">{item.original}</p>
                   <p className="text-sm text-slate-700 dark:text-slate-200 font-medium line-clamp-3">{item.translated}</p>
                 </div>
               ))}
