@@ -77,3 +77,22 @@ body {
 .dark .blue-scrollbar::-webkit-scrollbar-thumb {
   background: #475569; /* slate-600 */
 }
+
+/* Ant Design Select Dropdown Dark Mode Overrides */
+.dark .ant-select-dropdown {
+  background-color: #1e293b !important; /* slate-800 */
+  border: 1px solid #334155 !important; /* slate-700 */
+}
+
+.dark .ant-select-item {
+  color: #e2e8f0 !important; /* slate-200 */
+}
+
+.dark .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background-color: #334155 !important; /* slate-700 */
+}
+
+.dark .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background-color: #475569 !important; /* slate-600 */
+  color: #f8fafc !important; /* slate-50 */
+}

@@ -102,21 +102,31 @@ const Header = ({
         </div>
         
         <div className="flex items-center gap-2 md:fixed md:top-6 md:right-8">
-          <button 
-            onClick={openHistory}
-            className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            aria-label="Ver historial"
-          >
-            <HistoryIcon />
-          </button>
+          <div className="relative group">
+            <button 
+              onClick={openHistory}
+              className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              aria-label="Ver historial"
+            >
+              <HistoryIcon />
+            </button>
+            <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1.5 bg-slate-800 dark:bg-slate-700 text-white text-[11px] font-medium rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-lg border border-slate-700 dark:border-slate-600">
+              History
+            </div>
+          </div>
           
-          <button 
-            onClick={toggleDark}
-            className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors mr-2 md:mr-4"
-            aria-label="Toggle dark mode"
-          >
-            {isDark ? <SunIcon /> : <MoonIcon />}
-          </button>
+          <div className="relative group mr-2 md:mr-4">
+            <button 
+              onClick={toggleDark}
+              className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              aria-label="Toggle dark mode"
+            >
+              {isDark ? <SunIcon /> : <MoonIcon />}
+            </button>
+            <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2.5 py-1.5 bg-slate-800 dark:bg-slate-700 text-white text-[11px] font-medium rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 shadow-lg border border-slate-700 dark:border-slate-600">
+              {isDark ? "Light mode" : "Dark mode"}
+            </div>
+          </div>
           
           <div className="relative flex items-center gap-1.5 group">
           <span className="text-xs text-slate-500 dark:text-slate-400 font-medium tracking-wide">AI model</span>
