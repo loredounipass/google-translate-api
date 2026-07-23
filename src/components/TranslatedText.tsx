@@ -7,15 +7,35 @@ import { DEFAULT_SOURCE_LANGUAGE, DEFAULT_TARGET_LANGUAGE, DEFAULT_MODEL, AI_MOD
 import { debounce } from "lodash";
 
 const cleanText = (rawText: string) => {
-  const translationMatch = rawText.match(/<translation>([\s\S]*?)(?:<\/translation>|$)/);
+  // 1. Fully formed <translation> block
+  const translationMatch = rawText.match(/<translation\s*>([\s\S]*?)(?:<\/translation\s*>|$)/i);
   if (translationMatch) {
     return translationMatch[1].trimStart();
   }
-  const thinkingMatch = rawText.match(/<\/thinking>([\s\S]*)/);
+
+  // 2. Past </thinking>, waiting for or in the middle of <translation>
+  const thinkingMatch = rawText.match(/<\/thinking\s*>([\s\S]*)/i);
   if (thinkingMatch) {
-    return thinkingMatch[1].trimStart();
+    const afterThinking = thinkingMatch[1].trimStart();
+    if ("<translation>".startsWith(afterThinking.toLowerCase())) {
+       return "";
+    }
+    return afterThinking.replace(/<translation\s*>/ig, "").trimStart();
   }
-  return "";
+
+  // 3. Inside <thinking> block
+  if (rawText.toLowerCase().includes("<thinking")) {
+    return "";
+  }
+
+  // 4. At the very beginning, typing out tags
+  const trimmedLower = rawText.trimStart().toLowerCase();
+  if ("<thinking>".startsWith(trimmedLower) || "<translation>".startsWith(trimmedLower)) {
+    return "";
+  }
+
+  // 5. Fallback for cached clean text or model forgetting tags
+  return rawText.trimStart();
 };
 
 const TranslatedText = () => {
