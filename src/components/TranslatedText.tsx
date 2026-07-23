@@ -20,7 +20,7 @@ const cleanText = (rawText: string) => {
   if (thinkingMatch) {
     let afterThinking = thinkingMatch[1].trimStart();
     if ("<translation>".startsWith(afterThinking.toLowerCase())) {
-       return "";
+      return "";
     }
     afterThinking = afterThinking.replace(/<translation\s*>/ig, "").trimStart();
     return afterThinking.replace(/<\/?[a-z]*\s*$/i, "");
@@ -58,13 +58,13 @@ const TranslatedText = () => {
       setTranslatedText([]);
       return;
     }
-    
+
     try {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
       abortControllerRef.current = new AbortController();
-  
+
       const translated = await translate(targetLang, sourceLang, value, mId, {
         signal: abortControllerRef.current.signal,
         onData: (text) => {
@@ -74,10 +74,31 @@ const TranslatedText = () => {
           }
         },
       });
-      
+
       if (translated) {
         const cleaned = cleanText(translated);
         setTranslatedText(cleaned ? [cleaned] : []);
+
+        if (cleaned && value.trim()) {
+          try {
+            const historyStr = localStorage.getItem("translation_history");
+            let history = historyStr ? JSON.parse(historyStr) : [];
+            const lastItem = history[0];
+            
+            // Prevent spamming history while typing continuously
+            if (lastItem && value.trim().startsWith(lastItem.original) && (Date.now() - lastItem.timestamp < 15000)) {
+               history[0] = { original: value.trim(), translated: cleaned, timestamp: Date.now() };
+            } else if (lastItem && lastItem.original === value.trim()) {
+               // Do nothing if it's the exact same
+            } else {
+               history.unshift({ original: value.trim(), translated: cleaned, timestamp: Date.now() });
+            }
+            
+            history = history.slice(0, 50); // Keep last 50
+            localStorage.setItem("translation_history", JSON.stringify(history));
+            window.dispatchEvent(new Event("historyUpdated"));
+          } catch (e) {}
+        }
       }
     } catch (error) {
       if (axios.isCancel(error)) return;
@@ -186,7 +207,7 @@ const TranslatedText = () => {
   }, []);
 
   return (
-    <div className={`relative bg-[#f3f4f6] dark:bg-slate-800 text-[#0f1720] dark:text-slate-100 font-sans font-normal leading-normal ${isRTL ? 'text-right' : 'text-left'} text-lg break-words min-h-[100px] border-t md:border-t-0 md:border-l border-[#e6e9ee] dark:border-slate-700/50 flex-1 flex flex-col transition-colors min-w-0 min-h-0`}>
+    <div className={`relative bg-[#f3f4f6] dark:bg-slate-800 text-[#0f1720] dark:text-slate-100 font-sans font-normal leading-normal ${isRTL ? 'text-right' : 'text-left'} text-lg break-words min-h-[100px] border-t md:border-t-0 md:border-l border-[#e6e9ee] dark:border-slate-700/50 flex-1 flex flex-col transition-colors`}>
       {translatedText.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full min-h-[100px] text-[#9ca3af] dark:text-slate-400 text-base font-normal p-4 px-6 text-center leading-relaxed">
           <div className="flex items-center justify-center">
