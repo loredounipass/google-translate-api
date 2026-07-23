@@ -10,17 +10,20 @@ const cleanText = (rawText: string) => {
   // 1. Fully formed <translation> block
   const translationMatch = rawText.match(/<translation\s*>([\s\S]*?)(?:<\/translation\s*>|$)/i);
   if (translationMatch) {
-    return translationMatch[1].trimStart();
+    let result = translationMatch[1].trimStart();
+    // Hide any incomplete tag being typed at the very end of the stream (e.g. "</", "</trans")
+    return result.replace(/<\/?[a-z]*\s*$/i, "");
   }
 
   // 2. Past </thinking>, waiting for or in the middle of <translation>
   const thinkingMatch = rawText.match(/<\/thinking\s*>([\s\S]*)/i);
   if (thinkingMatch) {
-    const afterThinking = thinkingMatch[1].trimStart();
+    let afterThinking = thinkingMatch[1].trimStart();
     if ("<translation>".startsWith(afterThinking.toLowerCase())) {
        return "";
     }
-    return afterThinking.replace(/<translation\s*>/ig, "").trimStart();
+    afterThinking = afterThinking.replace(/<translation\s*>/ig, "").trimStart();
+    return afterThinking.replace(/<\/?[a-z]*\s*$/i, "");
   }
 
   // 3. Inside <thinking> block
@@ -35,7 +38,7 @@ const cleanText = (rawText: string) => {
   }
 
   // 5. Fallback for cached clean text or model forgetting tags
-  return rawText.trimStart();
+  return rawText.replace(/<\/?[a-z]*\s*$/i, "").trimStart();
 };
 
 const TranslatedText = () => {
