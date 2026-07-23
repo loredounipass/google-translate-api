@@ -31,7 +31,8 @@ const TranslatedText = () => {
       abortControllerRef.current = new AbortController();
   
       const translated = await translate(targetLang, sourceLang, value, mId, {
-        signal: abortControllerRef.current.signal
+        signal: abortControllerRef.current.signal,
+        onData: (text) => setTranslatedText([text]),
       });
       
       if (translated) {

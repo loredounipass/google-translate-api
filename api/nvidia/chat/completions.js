@@ -54,6 +54,35 @@ module.exports = async (req, res) => {
     return res.status(429).json({ error: "Too Many Requests" });
   }
 
+  // --- Streaming Bypass ---
+  if (req.body && req.body.stream === true) {
+    const bodyStr = JSON.stringify(req.body);
+    const options = {
+      hostname: "integrate.api.nvidia.com",
+      path: "/v1/chat/completions",
+      method: "POST",
+      headers: {
+        host: "integrate.api.nvidia.com",
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(bodyStr),
+      },
+    };
+
+    const proxyReq = https.request(options, (proxyRes) => {
+      res.writeHead(proxyRes.statusCode, proxyRes.headers);
+      proxyRes.pipe(res);
+    });
+
+    proxyReq.on("error", (err) => {
+      if (!res.headersSent) {
+        res.status(500).json({ error: "Proxy stream error: " + err.message });
+      }
+    });
+    proxyReq.end(bodyStr);
+    return;
+  }
+
   // --- Cache & Coalescing ---
   const cacheKey = generateCacheKey(req.body);
   

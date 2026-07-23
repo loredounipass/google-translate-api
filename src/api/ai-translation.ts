@@ -165,7 +165,7 @@ export const translate = async (
   sourceLang: string,
   text: string,
   modelId: string,
-  options?: { signal?: AbortSignal }
+  options?: { signal?: AbortSignal; onData?: (text: string) => void }
 ): Promise<string> => {
   const cleanedText = text.trim();
   if (!cleanedText) throw new Error("El texto a traducir no puede estar vacío.");
@@ -177,7 +177,12 @@ export const translate = async (
 
   const cacheKey = getCacheKey(cleanedText, targetLang, sourceLang, modelId);
   const cached = translationCache.get(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    if (options?.onData) {
+      options.onData(cached);
+    }
+    return cached;
+  }
 
   const systemPrompt = buildSystemPrompt(targetLang, sourceLang);
   const userPrompt = `Translate the following text to ${getLanguageName(targetLang)}.\n\n${cleanedText}`;
@@ -206,44 +211,108 @@ export const translate = async (
     }
 
     try {
-      const response = await axios.post(
-        NVIDIA_API_URL,
-        {
-          model: modelId,
-          messages: messages,
-          temperature: dynamicTemperature,
-          max_tokens: 4096,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
+      if (options?.onData) {
+        const fetchResponse = await fetch(NVIDIA_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: modelId,
+            messages: messages,
+            temperature: dynamicTemperature,
+            max_tokens: 4096,
+            stream: true,
+          }),
           signal: options?.signal,
+        });
+
+        if (!fetchResponse.ok) {
+          throw new Error(`HTTP Error: ${fetchResponse.status}`);
         }
-      );
 
-      const rawContent = response.data?.choices?.[0]?.message?.content?.trim();
-      if (!rawContent) throw new Error("No se recibió traducción del modelo");
+        const reader = fetchResponse.body?.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let accumulatedRawText = "";
+        let buffer = "";
 
-      // 4. Extracción de <translation> XML
-      let translated = rawContent;
-      const translationMatch = rawContent.match(/<translation>([\s\S]*?)<\/translation>/);
-      
-      if (translationMatch && translationMatch[1]) {
-        translated = translationMatch[1].trim();
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+            for (const line of lines) {
+              const trimmedLine = line.trim();
+              if (trimmedLine === "data: [DONE]") continue;
+              if (trimmedLine.startsWith("data: ")) {
+                try {
+                  const data = JSON.parse(trimmedLine.substring(6));
+                  const content = data.choices?.[0]?.delta?.content || "";
+                  if (content) {
+                    accumulatedRawText += content;
+                    options.onData(accumulatedRawText);
+                  }
+                } catch (e) {
+                  // Ignore incomplete JSON chunks
+                }
+              }
+            }
+          }
+        }
+        
+        let translated = accumulatedRawText;
+        const translationMatch = accumulatedRawText.match(/<translation>([\s\S]*?)<\/translation>/);
+        if (translationMatch && translationMatch[1]) {
+          translated = translationMatch[1].trim();
+        } else {
+          const thinkingMatch = accumulatedRawText.match(/<\/thinking>([\s\S]*)/);
+          if (thinkingMatch && thinkingMatch[1]) {
+            translated = thinkingMatch[1].trim();
+          }
+        }
+        
+        translationCache.set(cacheKey, translated);
+        return accumulatedRawText; // Return the full raw text including thinking tags so UI is consistent with the stream
       } else {
-        // Fallback robusto en caso de que el modelo ignore las etiquetas XML (poco probable con Few-Shot)
-        const thinkingMatch = rawContent.match(/<\/thinking>([\s\S]*)/);
-        if (thinkingMatch && thinkingMatch[1]) {
-          translated = thinkingMatch[1].trim();
+        const response = await axios.post(
+          NVIDIA_API_URL,
+          {
+            model: modelId,
+            messages: messages,
+            temperature: dynamicTemperature,
+            max_tokens: 4096,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            signal: options?.signal,
+          }
+        );
+
+        const rawContent = response.data?.choices?.[0]?.message?.content?.trim();
+        if (!rawContent) throw new Error("No se recibió traducción del modelo");
+
+        // 4. Extracción de <translation> XML
+        let translated = rawContent;
+        const translationMatch = rawContent.match(/<translation>([\s\S]*?)<\/translation>/);
+        
+        if (translationMatch && translationMatch[1]) {
+          translated = translationMatch[1].trim();
+        } else {
+          // Fallback robusto en caso de que el modelo ignore las etiquetas XML (poco probable con Few-Shot)
+          const thinkingMatch = rawContent.match(/<\/thinking>([\s\S]*)/);
+          if (thinkingMatch && thinkingMatch[1]) {
+            translated = thinkingMatch[1].trim();
+          }
         }
+
+        if (!translated) throw new Error("Fallo al extraer la traducción de las etiquetas XML");
+
+        translationCache.set(cacheKey, translated);
+
+        return translated;
       }
-
-      if (!translated) throw new Error("Fallo al extraer la traducción de las etiquetas XML");
-
-      translationCache.set(cacheKey, translated);
-
-      return translated;
     } catch (error) {
       if (axios.isCancel(error)) throw error;
       if (error instanceof DOMException) throw error;
@@ -254,6 +323,10 @@ export const translate = async (
           lastError = error;
           continue;
         }
+      }
+      if (error instanceof Error && error.message.startsWith("HTTP Error: ")) {
+         lastError = error;
+         continue;
       }
 
       throw new Error(`Error en traducción AI: ${(error as Error).message}`);
