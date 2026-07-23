@@ -95,7 +95,7 @@ const LanguagesBar = () => {
         options={languageOptions as unknown as { value: string; label: string }[]}
         aria-label="Seleccionar idioma origen"
         popupMatchSelectWidth={false}
-        className="lang-select w-full min-w-0 flex-1 md:min-w-[140px]"
+        className="lang-select w-0 flex-1 min-w-0"
       />
       
       <button
@@ -112,7 +112,7 @@ const LanguagesBar = () => {
         options={languageOptions as unknown as { value: string; label: string }[]}
         aria-label="Seleccionar idioma destino"
         popupMatchSelectWidth={false}
-        className="lang-select w-full min-w-0 flex-1 md:min-w-[140px]"
+        className="lang-select w-0 flex-1 min-w-0"
       />
     </div>
   );

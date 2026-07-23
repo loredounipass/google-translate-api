@@ -44,11 +44,9 @@ body {
 }
 
 @media (max-width: 480px) {
-  .lang-select {
-    min-width: 120px;
-  }
   .lang-select .ant-select-selector {
     font-size: 14px !important;
+    padding: 8px 0 !important;
   }
 }
 
