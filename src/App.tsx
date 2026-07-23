@@ -96,7 +96,7 @@ const Header = ({
       <div className="fixed top-0 left-0 w-full p-4 md:top-6 md:left-8 md:w-auto md:p-0 flex flex-col sm:flex-row items-center justify-between gap-3 z-50 select-none cursor-default bg-white/90 dark:bg-slate-900/90 md:bg-transparent md:dark:bg-transparent backdrop-blur-md md:backdrop-blur-none border-b border-slate-200 dark:border-slate-800 md:border-none md:dark:border-none shadow-sm md:shadow-none transition-all">
         <div className="flex items-center gap-3">
           <div className="font-semibold text-lg md:text-xl text-slate-800 dark:text-slate-100 tracking-tight">
-            interpeter-0 AI agent
+            AI translator
           </div>
           <ModeIndicator />
         </div>
@@ -171,9 +171,7 @@ const Header = ({
 function App() {
   const [isDark, setIsDark] = useState(() => {
     try {
-      if (localStorage.getItem("theme") === "dark") return true;
-      if (!localStorage.getItem("theme") && window.matchMedia("(prefers-color-scheme: dark)").matches) return true;
-      return false;
+      return localStorage.getItem("theme") === "dark";
     } catch (e) {
       return false;
     }
@@ -204,7 +202,7 @@ function App() {
           <Route
             path="/"
             Component={() => (
-              <div className="text-center text-[#111111] dark:text-slate-100 h-[calc(100vh-7rem)] md:h-[80vh] w-[95%] md:w-[97%] bg-white dark:bg-slate-800 rounded-2xl mx-auto mt-24 md:mt-[10vh] overflow-hidden flex flex-col font-sans shadow-lg border border-slate-200/50 dark:border-slate-700/50 transition-colors duration-200">
+              <div className="text-center text-[#111111] dark:text-slate-100 h-[calc(100vh-8rem)] md:h-[80vh] w-[95%] md:w-[97%] bg-white dark:bg-slate-800 rounded-2xl mx-auto mt-28 md:mt-[10vh] overflow-hidden flex flex-col font-sans shadow-lg border border-slate-200/50 dark:border-slate-700/50 transition-colors duration-200">
                 <LanguagesBar />
               <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
                 <TranslationTextField />
