@@ -16,23 +16,20 @@ Linux
 $ export NODE_OPTIONS=--openssl-legacy-provider
 ```
 
-# Start frontend
+# Install dep
 ```
-$ cd frontend  
-$ npm install
+$ cd AI-translator
+$ pnpm install
 ```
-# if error
-```
-$ npm install --force
-```
+## Start APP
 ```
 $ npm start
 ```
 
 # Run Build
 ```
-$ npm run build
-$ npm install -g serve
+$ pnpm run build
+$ pnpm install -g serve
 $ serve -s build
 ```
 
